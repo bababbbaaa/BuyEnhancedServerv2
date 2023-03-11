@@ -26,6 +26,10 @@ namespace BuyEnhancedServer.Proxies
         private ProxyList proxyList;
         // timeout : nombre entier qui correspond au nombre de millisecondes écoulé à partir duquel on considère un proxy comme invalide
         private int timeout;
+        //état du thread (true: actif, false: inactif)
+        private bool state;
+        //Thread pour lancer en parallèle l'ajout de proxy
+        Thread thread;
 
         /*
         *    Nom : RemoveInvalidProxiesThread (Constructeur)
@@ -40,6 +44,43 @@ namespace BuyEnhancedServer.Proxies
 
             this.proxyList = aProxyList;
             this.timeout = aTimeout;
+            this.state = false;
+            this.thread = new(this.run);
+        }
+
+        /*
+        *    Nom : Start
+        *    Role : Démarrer le thread 
+        *    Fiabilité : Sure
+        */
+        public void Start()
+        {
+            Log.TraceInformation("RemoveInvalidProxiesThread.Start", "Appel");
+            this.state = true;
+            this.thread.Start();
+        }
+
+        /*
+        *    Nom : Stop
+        *    Role : Démarrer le thread 
+        *    Fiabilité : Sure
+        */
+        public void Stop()
+        {
+            Log.TraceInformation("RemoveInvalidProxiesThread.Stop", "Appel");
+            this.state = false;
+        }
+
+        /*
+        *    Nom : isActiv
+        *    Role : Donner l'état du thread
+        *    Retour : booléen indiquant si le thread est actif (true: actif, false: inactif)
+        *    Fiabilité : Sure
+        */
+        public bool isActiv()
+        {
+            Log.TraceInformation("RemoveInvalidProxiesThread.IsAlive", "Appel");
+            return this.thread.IsAlive;
         }
 
         /*
@@ -53,7 +94,7 @@ namespace BuyEnhancedServer.Proxies
 
             try
             {
-                while (true)
+                while (this.state)
                 {
                     Console.WriteLine("Remove proxy lancé");
                     Log.TraceInformation("RemoveInvalidProxiesThread.Run", "Nouvelle itération");
@@ -77,6 +118,7 @@ namespace BuyEnhancedServer.Proxies
                             }
 
                             this.proxyList.ReleaseMutex();
+                            if (!this.state) { return; }
                             i++;
                             this.proxyList.WaitOne();
                         }

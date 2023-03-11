@@ -211,19 +211,19 @@ namespace BuyEnhancedServer.Bybit
                         }
                         else
                         {
-                            Console.WriteLine("TraderManager --> takePosition --> Erreur : requête invalide\nMessage : " + ex.Message);
+                            Console.WriteLine("BybitManager --> takePosition --> Erreur : requête invalide\nMessage : " + ex.Message);
                             Log.TraceError("BybitManager.takePosition", "Erreur : requête invalide\nMessage : " + ex.Message);
 
                             return 2;
                         }
                     }
                     
-                    Console.WriteLine("TraderManager --> takePosition --> Erreur lors de l'essai numéro :" + i.ToString() + "\nCode d'erreur : " + ex.code.ToString() + "\nMessage : " + ex.Message);
+                    Console.WriteLine("BybitManager --> takePosition --> Erreur lors de l'essai numéro :" + i.ToString() + "\nCode d'erreur : " + ex.code.ToString() + "\nMessage : " + ex.Message);
                     Log.TraceWarning("BybitManager.takePosition", "Erreur lors de l'essai numéro :" + i.ToString() + "\nCode d'erreur : " + ex.code.ToString() + "\nMessage : " + ex.Message);
                 }
                 catch(Exception ex)
                 {
-                    Console.WriteLine("TraderManager --> takePosition --> Erreur lors de l'essai numéro :" + i.ToString() + "\nMessage : " + ex.Message);
+                    Console.WriteLine("BybitManager --> takePosition --> Erreur lors de l'essai numéro :" + i.ToString() + "\nMessage : " + ex.Message);
                     Log.TraceWarning("BybitManager.takePosition", "Erreur lors de l'essai numéro :" + i.ToString() + "\nMessage : " + ex.Message);
                 }
                 
@@ -334,19 +334,19 @@ namespace BuyEnhancedServer.Bybit
                         }
                         else
                         {
-                            Console.WriteLine("TraderManager --> ClosePosition --> Erreur : requête invalide\nMessage : " + ex.Message);
+                            Console.WriteLine("BybitManager --> ClosePosition --> Erreur : requête invalide\nMessage : " + ex.Message);
                             Log.TraceError("BybitManager.ClosePosition", "Erreur : requête invalide\nMessage : " + ex.Message);
 
                             return 2;
                         }
                     }
 
-                    Console.WriteLine("TraderManager --> ClosePosition --> Erreur lors de l'essai numéro :" + i.ToString() + "\nCode d'erreur : " + ex.code.ToString() + "\nMessage : " + ex.Message);
+                    Console.WriteLine("BybitManager --> ClosePosition --> Erreur lors de l'essai numéro :" + i.ToString() + "\nCode d'erreur : " + ex.code.ToString() + "\nMessage : " + ex.Message);
                     Log.TraceWarning("BybitManager.ClosePosition", "Erreur lors de l'essai numéro :" + i.ToString() + "\nCode d'erreur : " + ex.code.ToString() + "\nMessage : " + ex.Message);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("TraderManager --> ClosePosition --> Erreur lors de l'essai numéro :" + i.ToString() + "\nMessage : " + ex.Message);
+                    Console.WriteLine("BybitManager --> ClosePosition --> Erreur lors de l'essai numéro :" + i.ToString() + "\nMessage : " + ex.Message);
                     Log.TraceWarning("BybitManager.ClosePosition", "Erreur lors de l'essai numéro :" + i.ToString() + "\nMessage : " + ex.Message);
                 }
 
@@ -409,12 +409,12 @@ namespace BuyEnhancedServer.Bybit
                 }
                 catch(BybitException ex)
                 {
-                    Console.WriteLine("TradeManader --> GetBalanceUSD --> Erreur avec la communication Bybit\nCode d'erreur : " + ex.code.ToString() + "\nMessage : " + ex.Message);
+                    Console.WriteLine("BybitManager --> GetBalanceUSD --> Erreur avec la communication Bybit\nCode d'erreur : " + ex.code.ToString() + "\nMessage : " + ex.Message);
                     Log.TraceWarning("BybitManager.GetBalanceUSD", "Erreur avec la communication Bybit\nCode d'erreur : " + ex.code.ToString() + "\nMessage : " + ex.Message);
                 }
                 catch(Exception ex)
                 {
-                    Console.WriteLine("TradeManader --> GetBalanceUSD --> Erreur\nMessage : " + ex.Message);
+                    Console.WriteLine("BybitManager --> GetBalanceUSD --> Erreur\nMessage : " + ex.Message);
                     Log.TraceWarning("BybitManager.GetBalanceUSD", "Erreur\nMessage : " + ex.Message);
                 }
             }
@@ -474,12 +474,12 @@ namespace BuyEnhancedServer.Bybit
                 }
                 catch (BybitException ex)
                 {
-                    Console.WriteLine("TradeManader --> switchToHedgeMode --> Erreur avec la communication Bybit\nCode d'erreur : " + ex.code.ToString() + "\nMessage : " + ex.Message);
+                    Console.WriteLine("BybitManager --> switchToHedgeMode --> Erreur avec la communication Bybit\nCode d'erreur : " + ex.code.ToString() + "\nMessage : " + ex.Message);
                     Log.TraceWarning("BybitManager.switchToHedgeMode", "Erreur avec la communication Bybit\nCode d'erreur : " + ex.code.ToString() + "\nMessage : " + ex.Message);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("TradeManader --> switchToHedgeMode --> Erreur\nMessage : " + ex.Message);
+                    Console.WriteLine("BybitManager --> switchToHedgeMode --> Erreur\nMessage : " + ex.Message);
                     Log.TraceWarning("BybitManager.switchToHedgeMode", "Erreur\nMessage : " + ex.Message);
                 }
             }
@@ -487,89 +487,6 @@ namespace BuyEnhancedServer.Bybit
             Log.TraceError("BybitManager.switchToHedgeMode", "Impossible de passer en mode de couverture");
             return false;
         }
-
-        /*
-        *    Nom : GetSymbolInfo (obsolète)
-        *    Retour : JToken contenant les informations correspondant au symbole passé en paramètre
-        *    Paramètre E : un symbole pour lequel on veut obtenir des informations
-        *    Role : retourner les informations sur un symbole sous forme de JToken
-        *    Fiabilité : Possibilité de lever une BybitException (code=1 : invalid symbol) ou Exception
-        */
-        /*
-        public JToken GetSymbolInfoObsolete(string aSymbol)
-        {
-            Log.TraceInformation("BybitManager.GetSymbolInfo", "Appel");
-
-            HttpClient client = new ();
-
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-            string url = "https://api-testnet.bybit.com/";
-
-            string fonction = "/spot/v3/public/symbols";
-
-            string responseString;
-
-            for (int i = 1; i <= 5; i++)
-            {
-                try
-                {
-                    responseString = client.GetStringAsync(url + fonction).WaitAsync(TimeSpan.FromMilliseconds(this.recvWindow)).Result;
-
-                    //decommenter pour afficher la réponse au format JSON
-                    //Console.WriteLine(responseString);
-
-                    JObject jsonResponse = JObject.Parse(responseString);
-
-                    if(jsonResponse != null)
-                    {
-                        if(jsonResponse["retCode"] != null)
-                        {
-                            if ((int)jsonResponse["retCode"]! != 0)
-                            {
-                                throw new BybitException((int)jsonResponse["retCode"]!, (string)jsonResponse["retMsg"]!);
-                            }
-
-                            var symbolList = jsonResponse["result"]!["list"]!.Children().ToList();
-
-                            foreach (JToken symbol in symbolList)
-                            {
-                                Console.WriteLine(symbol["name"]);
-
-                                //Console.WriteLine(symbol);
-
-                                if ((string)symbol["name"]! == aSymbol)
-                                {
-                                    return symbol;
-                                }
-                            }
-
-                            throw new BybitException(1, "Impossible de trouver des informations sur  le symbole demandé --> Le symbole semble invalide !");
-                        }
-                    }
-
-                    throw new Exception("Réponse de l'API bybit incorrecte : contenu ou code de retour null");
-                }
-                catch (BybitException ex)
-                {
-                    if(ex.code == 1)
-                    {
-                        Log.TraceWarning("BybitManager.GetSymbolInfo", "Symbole invalide trouvé, exception levé ("+aSymbol+")");
-                        throw ex;
-                    }
-                    Console.WriteLine("TradeManader --> GetSymbolInfo --> Erreur avec la communication Bybit\nCode d'erreur : " + ex.code.ToString() + "\nMessage : " + ex.Message);
-                    Log.TraceWarning("BybitManager.GetSymbolInfo", "Erreur avec la communication Bybit\nCode d'erreur : " + ex.code.ToString() + "\nMessage : " + ex.Message);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("TradeManader --> GetSymbolInfo --> Erreur\nMessage : " + ex.Message);
-                    Log.TraceWarning("BybitManager.GetSymbolInfo", "Erreur\nMessage : " + ex.Message);
-                }
-            }
-
-            Log.TraceError("BybitManager.GetSymbolInfo", "Impossible de trouver des informations sur  le symbole demandé après 5 essais");
-            throw new Exception("Impossible de trouver des informations sur  le symbole demandé après 5 essais");
-        }*/
 
         /*
         *    Nom : GetSymbolInfo
@@ -635,12 +552,12 @@ namespace BuyEnhancedServer.Bybit
                         Log.TraceWarning("BybitManager.GetSymbolInfo", "Symbole invalide trouvé, exception levé (" + aSymbol + ")");
                         throw ex;
                     }
-                    Console.WriteLine("TradeManader --> GetSymbolInfo --> Erreur avec la communication Bybit\nCode d'erreur : " + ex.code.ToString() + "\nMessage : " + ex.Message);
+                    Console.WriteLine("BybitManager --> GetSymbolInfo --> Erreur avec la communication Bybit\nCode d'erreur : " + ex.code.ToString() + "\nMessage : " + ex.Message);
                     Log.TraceWarning("BybitManager.GetSymbolInfo", "Erreur avec la communication Bybit\nCode d'erreur : " + ex.code.ToString() + "\nMessage : " + ex.Message);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("TradeManader --> GetSymbolInfo --> Erreur\nMessage : " + ex.Message);
+                    Console.WriteLine("BybitManager --> GetSymbolInfo --> Erreur\nMessage : " + ex.Message);
                     Log.TraceWarning("BybitManager.GetSymbolInfo", "Erreur\nMessage : " + ex.Message);
                 }
             }
@@ -711,18 +628,122 @@ namespace BuyEnhancedServer.Bybit
                 }
                 catch (BybitException ex)
                 {
-                    Console.WriteLine("TradeManader --> switchToHedgeMode --> Erreur avec la communication Bybit\nCode d'erreur : " + ex.code.ToString() + "Message : " + ex.Message);
+                    Console.WriteLine("BybitManager --> switchToHedgeMode --> Erreur avec la communication Bybit\nCode d'erreur : " + ex.code.ToString() + "Message : " + ex.Message);
                     Log.TraceWarning("BybitManager.GetPositionSize", "Erreur avec la communication Bybit\nCode d'erreur : " + ex.code.ToString() + "Message : " + ex.Message);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("TradeManader --> switchToHedgeMode --> Erreur\nMessage: " + ex.Message);
+                    Console.WriteLine("BybitManager --> switchToHedgeMode --> Erreur\nMessage: " + ex.Message);
                     Log.TraceWarning("BybitManager.GetPositionSize", "Erreur\nMessage: " + ex.Message);
                 }
             }
 
             Log.TraceError("BybitManager.GetPositionSize", "Impossible de trouver des informations sur  le symbole demandé après 5 essais");
             throw new Exception("Impossible de trouver des informations sur  le symbole demandé après 5 essais");
+        }
+
+        /*
+        *    Nom : PrepareVerifyRequest
+        *    Retour : une RestRequest prête à être envoyée
+        *    Paramètre E : APIfunction qui est la chaine de caractère qui complète de le endpoint de l'API (ressource de l'API), 2 chaine de caractères qui sont les paramètres d'authentification
+        *    Role : préparer et retourner une RestRequest prête à être envoyer à partir d'une chaine de caractère (ressource API) et d'une combinaison de api key et api secret
+        *    Fiabilité : Sure
+        */
+        static private RestRequest PrepareVerifyRequest(string APIfunction,string anApiKey,string anApiSecret)
+        {
+            RestRequest restRequest;
+
+            restRequest = new RestRequest(APIfunction);
+
+            BybitRequest bybitRequest = new("");
+
+            double timestamp = BybitManager.GetTimestamp();
+
+            restRequest.AddHeader("Content-Type", "application/json");
+            restRequest.AddHeader("X-BAPI-SIGN", bybitRequest.getSign(anApiSecret, timestamp, anApiKey, 5000));
+            restRequest.AddHeader("X-BAPI-API-KEY", anApiKey);
+            restRequest.AddHeader("X-BAPI-TIMESTAMP", timestamp);
+            restRequest.AddHeader("X-BAPI-RECV-WINDOW", 5000);
+
+            return restRequest;
+        }
+
+        /*
+        *    Nom : verifyAuthentificationInformations
+        *    Retour : bool indiquant si les indifiants sont correct (true: indentifiants corrects,  false: identifiants incorrects)
+        *    Role : retourner un booléen idiquant la validite de la combinaison clé api et api secret
+        *    Fiabilité : Possibilité de lever une Exception
+        */
+        static public bool verifyAuthentificationInformations(string anApiKey, string anApiSecret)
+        {
+            Log.TraceInformation("BybitManager.verifyAuthentificationInformations", "Appel");
+
+            RestResponse response;
+
+            RestClient restClient = new RestClient("https://api-testnet.bybit.com");
+
+            for (int i = 1; i <= 5; i++)
+            {
+                try
+                {
+                    //on prépare la requête à partir de la requête Bybit précédemment créée
+                    RestRequest restRequest = BybitManager.PrepareVerifyRequest("/v5/user/query-api", anApiKey, anApiSecret);
+
+                    //on envoie simplement la requête
+                    response = restClient.Get(restRequest);
+
+                    //decommenter pour afficher la réponse au format JSON
+                    //Console.WriteLine(response.Content);
+
+                    if (response.Content != null)
+                    {
+                        JObject jsonResponse = JObject.Parse(response.Content);
+
+                        if (jsonResponse["retCode"] != null)
+                        {
+                            if ((int)jsonResponse["retCode"]! == 10003 || (int)jsonResponse["retCode"]! == 10004)
+                            {
+                                return false;
+                            }
+                            if ((int)jsonResponse["retCode"]! != 0)
+                            {
+                                throw new BybitException((int)jsonResponse["retCode"]!, (string)jsonResponse["retMsg"]!);
+                            }
+
+                            //double result = double.Parse(((string)jsonResponse["result"]!["list"]!.Children().ToList()[0]["coin"]!.Children().ToList()[0]["availableToWithdraw"])!, CultureInfo.InvariantCulture);
+                            if (jsonResponse["result"]!["permissions"]!["ContractTrade"]!.Children().ToList().Contains("Order")
+                            && jsonResponse["result"]!["permissions"]!["ContractTrade"]!.Children().ToList().Contains("Position")
+                            && jsonResponse["result"]!["permissions"]!["Spot"]!.Children().ToList().Contains("SpotTrade")
+                            && jsonResponse["result"]!["permissions"]!["Wallet"]!.Children().ToList().Contains("AccountTransfer")
+                            && jsonResponse["result"]!["permissions"]!["Wallet"]!.Children().ToList().Contains("SubMemberTransfer")
+                            && jsonResponse["result"]!["permissions"]!["Options"]!.Children().ToList().Contains("OptionsTrade")
+                            && jsonResponse["result"]!["permissions"]!["Derivatives"]!.Children().ToList().Contains("DerivativesTrade")
+                            && jsonResponse["result"]!["permissions"]!["CopyTrading"]!.Children().ToList().Contains("CopyTrading")
+                            && jsonResponse["result"]!["permissions"]!["Exchange"]!.Children().ToList().Contains("ExchangeHistory"))
+                            {
+                                return true;
+                            }
+
+                            return false;
+                        }
+                    }
+                    
+                    throw new Exception("Réponse de l'API bybit incorrecte : contenu ou code de retour null");
+                }
+                catch (BybitException ex)
+                {
+                    Console.WriteLine("BybitManager --> verifyAuthentificationInformations --> Erreur avec la communication Bybit\nCode d'erreur : " + ex.code.ToString() + "\nMessage : " + ex.Message);
+                    Log.TraceWarning("BybitManager.verifyAuthentificationInformations", "Erreur avec la communication Bybit\nCode d'erreur : " + ex.code.ToString() + "\nMessage : " + ex.Message);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("BybitManager --> verifyAuthentificationInformations --> Erreur\nMessage : " + ex.Message);
+                    Log.TraceWarning("BybitManager.verifyAuthentificationInformations", "Erreur\nMessage : " + ex.Message);
+                }
+            }
+
+            Log.TraceError("BybitManager.verifyAuthentificationInformations", "Impossible d'obtenir le solde disponible sur le compte");
+            throw new Exception("Impossible d'obtenir le solde disponible sur le compte");
         }
     }
 }

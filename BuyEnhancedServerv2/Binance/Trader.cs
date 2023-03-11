@@ -683,6 +683,80 @@ namespace BuyEnhancedServer.Binance
         }
 
 
+        /*
+        *    Nom : GetPositionsJSON
+        *    Retour : la liste des positions courrantes du trader au format JSON
+        *    Role : Obtenir la liste des positions courrantes du trader au format JSON
+        *    Fiabilite : Possibilité de lever une Exception
+        */
+        static public bool verifyEncryptedUid(string anEncryptedUid)
+        {
+            Log.TraceInformation("Trader.verifyEncryptedUid", "Appel");
+
+            var request = new RestRequest("/bapi/futures/v1/public/future/leaderboard/getOtherPosition");
+
+            request.AddJsonBody(new
+            {
+                encryptedUid = anEncryptedUid,
+                tradeType = "PERPETUAL"
+            });
+
+            RestClient restClient = new RestClient("http://www.binance.com/");
+
+            Dictionary<string, string> headers = new Dictionary<string, string> {
+                {"authority","www.binance.com" },
+                {"accept","*/*" },
+                {"accept-encoding","gzip, deflate, br" },
+                {"accept-language","fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7" },
+                {"origin","https://www.binance.com" },
+                {"clienttype","web" },
+                {"cache-control","max-age=0" },
+                {"sec-fetch-dest","document" },
+                {"sec-fetch-mode","navigate" },
+                {"sec-fetch-site","same-origin" },
+                {"sec-fetch-user","\"?1\"" },
+                {"upgrade-insecure-requests","\"1\"" },
+                {"user-agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36" },
+                {"referer","https://www.binance.com/en/futures-activity/leaderboard/user?encryptedUid=" + anEncryptedUid}
+            };
+
+            restClient.AddDefaultHeaders(headers);
+
+            for (int i = 1; i <= 5; i++)
+            {
+                try
+                {
+                    var response = restClient.Post(request);
+
+                    JObject jsonResponse;
+
+                    if (response.Content != null)
+                    {
+                        jsonResponse = JObject.Parse(response.Content);
+
+                        if (jsonResponse["data"] != null && jsonResponse["data"]!["otherPositionRetList"] != null)
+                        {
+                            var stck = jsonResponse["data"]!["otherPositionRetList"]!;
+
+                            return !(stck.ToString() == "");
+                        }
+                    }
+
+                    throw new Exception();
+
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("Trader --> Impossible de récupérer les positions du Trader --> Essai numéro " + i.ToString());
+                    Log.TraceWarning("Trader.GetPositionsJSON", "Impossible de récupérer les positions du Trader --> Essai numéro " + i.ToString());
+                }
+            }
+
+            Log.TraceError("Trader.GetPositionsJSON", "Impossible de récupérer les positions du Trader");
+            throw new Exception("GetPositionsJSON : Impossible de récupérer les positions du Trader");
+        }
+
+
 
 
         //_____________________________________________________FONCTIONS DE TESTS________________________________________________________________

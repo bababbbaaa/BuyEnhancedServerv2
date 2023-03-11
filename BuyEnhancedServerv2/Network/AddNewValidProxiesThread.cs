@@ -23,7 +23,9 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using static System.Net.WebRequestMethods;
 
@@ -41,6 +43,10 @@ namespace BuyEnhancedServer.Proxies
         private int timeout;
         // le client pour le scraping de proxy
         private HttpClient scraperClient;
+        //état du thread (true: actif, false: inactif)
+        private bool state;
+        //Thread pour lancer en parallèle l'ajout de proxy
+        Thread thread;
 
         /*
         *    Nom : AddNewValidProxiesThread (Constructeur)
@@ -56,6 +62,8 @@ namespace BuyEnhancedServer.Proxies
             this.proxyList = aProxyList;
             this.timeout = aTimeout;
             this.scraperClient = new HttpClient();
+            this.state = false;
+            this.thread = new(this.run);
 
             //ajouter les entêtes
             Dictionary<string, string> headers = new Dictionary<string, string> {
@@ -82,7 +90,43 @@ namespace BuyEnhancedServer.Proxies
         }
 
         /*
-        *    Nom : Run
+        *    Nom : Start
+        *    Role : Démarrer le thread 
+        *    Fiabilité : Sure
+        */
+        public void Start()
+        {
+            Log.TraceInformation("AddNewValidProxiesThread.Start", "Appel");
+            this.state = true;
+            this.thread.Start();
+        }
+
+        /*
+        *    Nom : Stop
+        *    Role : Démarrer le thread 
+        *    Fiabilité : Sure
+        */
+        public void Stop()
+        {
+            Log.TraceInformation("AddNewValidProxiesThread.Stop", "Appel");
+            this.state = false;
+        }
+
+        /*
+        *    Nom : isActiv
+        *    Role : Donner l'état du thread
+        *    Retour : booléen indiquant si le thread est actif (true: actif, false: inactif)
+        *    Fiabilité : Sure
+        */
+        public bool isActiv()
+        {
+            Log.TraceInformation("AddNewValidProxiesThread.IsAlive", "Appel");
+            return this.thread.IsAlive;
+        }
+
+
+        /*
+        *    Nom : run
         *    Role : ajouter de nouveaux proxy à la liste passé en paramètre
         *    Fiabilité : Sure
         */
@@ -94,7 +138,7 @@ namespace BuyEnhancedServer.Proxies
 
             try
             {
-                while(true)
+                while(this.state)
                 {
                     Console.WriteLine("Add lancé");
                     Log.TraceInformation("AddNewValidProxiesThread.Run", "Nouvelle itération");
@@ -107,6 +151,7 @@ namespace BuyEnhancedServer.Proxies
                     //on ajoute chaque nouveau proxy à une liste nommée newProxies
                     try
                     {
+                        if (!this.state){return;}
                         newProxies = newProxies.Join(this.getNewProxiesFromProxyScrape());
                     }
                     catch(Exception e)
@@ -117,6 +162,7 @@ namespace BuyEnhancedServer.Proxies
 
                     try
                     {
+                        if (!this.state) { return; }
                         newProxies = newProxies.Join(this.getNewProxiesFromGeonode());
                     }
                     catch (Exception e)
@@ -127,6 +173,7 @@ namespace BuyEnhancedServer.Proxies
 
                     try
                     {
+                        if (!this.state) { return; }
                         newProxies = newProxies.Join(this.getNewProxiesFromFreeProxy());
                     }
                     catch (Exception e)
@@ -143,6 +190,8 @@ namespace BuyEnhancedServer.Proxies
                     //pour chaque proxy de la liste newProxies, on les teste et on les ajoutes à la liste s'ils sont valides
                     foreach (WebProxy newProxy in newProxies)
                     {
+                        if (!this.state) { return; }
+
                         count++;
 
                         Console.WriteLine($"Add --> {count}/{newProxies.Count}");
@@ -178,7 +227,6 @@ namespace BuyEnhancedServer.Proxies
                 Log.TraceError("AddNewValidProxiesThread.Run", "Erreur générale : \nDétails : " + ex.ToString());
             }
         }
-
 
         /*
         *    Nom : getNewProxiesFromGeonode

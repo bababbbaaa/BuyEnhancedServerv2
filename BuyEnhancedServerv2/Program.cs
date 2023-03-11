@@ -304,6 +304,14 @@ RemoveInvalidProxiesThread remove = new RemoveInvalidProxiesThread(ref proxylist
 //isGoodProxy utilise un HTTP handler 
 remove.isGoodProxy(null);*/
 
+//___________________________________TEST verifyEncryptedUid de Trader______________________________________
+
+//Console.WriteLine(Trader.verifyEncryptedUid("3AFFCB67ED4F1D1D8437BA17F4E8E5ED"));
+
+//___________________________________TEST verifyAuthentificationInformations de BybitManager______________________________________
+
+//Console.WriteLine(BybitManager.verifyAuthentificationInformations("SpF1bwKBaAWuEWbkxX", "d39sjQb4coXGnQ2yg43SGUWIIQ7NQ6eglrWj"));
+
 //___________________________________TRADE______________________________________
 /*
 namespace BuyEnhancedServer
@@ -326,8 +334,7 @@ namespace BuyEnhancedServer
             Thread removeThread = new(remove.run);
             removeThread.Start();
 
-            Thread addThread = new(add.run);
-            addThread.Start();
+            add.Start();
 
             while (list.count() < 5)
             {
@@ -340,30 +347,30 @@ namespace BuyEnhancedServer
             return;
         }
     }
-}
-*/
+}*/
+
 
 //___________________________________PROXY______________________________________
 /*
-
 ProxyList list = ProxyList.Instance();
 
 AddNewValidProxiesThread add = new (ref list);
-
 RemoveInvalidProxiesThread remove = new (ref list);
 
-Thread removeThread = new (remove.run);
-removeThread.Start();
+remove.Start();
+add.Start();
 
-Thread addThread = new (add.run);
-addThread.Start();
+Thread.Sleep(60000);
 
+remove.Stop();
+add.Stop();
 */
 //___________________________________API______________________________________
-
+/*
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
 app.MapGet("/", () => "Hello World!");
 
 app.Run();
+*/
