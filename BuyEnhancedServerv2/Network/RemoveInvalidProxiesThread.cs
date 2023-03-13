@@ -62,7 +62,7 @@ namespace BuyEnhancedServer.Proxies
 
         /*
         *    Nom : Stop
-        *    Role : Démarrer le thread 
+        *    Role : Arrêter le thread 
         *    Fiabilité : Sure
         */
         public void Stop()

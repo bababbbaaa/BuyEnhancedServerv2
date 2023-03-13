@@ -27,6 +27,13 @@ using BuyEnhancedServerv2.Utils;
 
 namespace BuyEnhancedServer.Binance
 {
+    enum State
+    {
+        stopped,
+        running,
+        softStopped
+    }
+
     /*
         *    Nom : Trader
         *    Role : Classe qui sert à suivre un trader dont l'encryptedUid est spécifié en paramètre du constructeur
@@ -73,6 +80,12 @@ namespace BuyEnhancedServer.Binance
         //indique si c'est la première fois que l'on récupère des positions
         private bool isFirstRun;
 
+        //Thread pour lancer en parallèle une souscription
+        Thread thread;
+
+        //état du thread (true: actif, false: inactif)
+        private State state;
+
 
         /*
         *    Nom : Trader
@@ -101,6 +114,9 @@ namespace BuyEnhancedServer.Binance
             this.unalteredPositions = new List<Position>();
             this.botPositions = new List<Position>();
 
+            this.thread = new(this.run);
+            this.state = State.stopped;
+
             //Configuration du client REST
             this.restClient = new RestClient("http://www.binance.com/");
 
@@ -126,17 +142,63 @@ namespace BuyEnhancedServer.Binance
         }
 
         /*
+        *    Nom : Start
+        *    Role : Démarrer le thread 
+        *    Fiabilité : Sure
+        */
+        public void Start()
+        {
+            Log.TraceInformation("Trader.Start", "Appel");
+            this.state = State.running;
+            this.thread.Start();
+        }
+
+        /*
+        *    Nom : Stop
+        *    Role : Arrêter le thread rapidement 
+        *    Fiabilité : Sure
+        */
+        public void Stop()
+        {
+            Log.TraceInformation("Trader.Stop", "Appel");
+            this.state = State.stopped;
+        }
+
+        /*
+        *    Nom : softStop
+        *    Role : Arrêter la souscription de façon lente mais optimiser
+        *    Fiabilité : Sure
+        */
+        public void softStop()
+        {
+            Log.TraceInformation("Trader.softStop", "Appel");
+            this.state = State.softStopped;
+        }
+
+        /*
+        *    Nom : isActiv
+        *    Role : Donner l'état du thread
+        *    Retour : booléen indiquant si le thread est actif (true: actif, false: inactif)
+        *    Fiabilité : Sure
+        */
+        public bool isActiv()
+        {
+            Log.TraceInformation("Trader.IsAlive", "Appel");
+            return this.thread.IsAlive;
+        }
+
+        /*
         *    Nom : Run
         *    Role : Assurer le suivi intégral des positions du trader spécifié
         *    Fiabilite : Sure
         */
-        public void Run()
+        public void run()
         {
             Log.TraceInformation("Trader.Run", "Appel");
 
             try
             {
-                while (true)
+                while (this.state != State.stopped)
                 {
                     Console.WriteLine("Nouvelle update position");
                     Log.TraceInformation("Trader.Run", "Nouvelle itération de la routine de mise à jour");
@@ -163,8 +225,11 @@ namespace BuyEnhancedServer.Binance
                         this.isFirstRun = false;
                     }
 
-                    this.UpdateOldPositions(traderPositions);
-                    this.UpdateUntakedPositions(traderPositions);
+                    if(this.state != State.softStopped)
+                    {
+                        this.UpdateOldPositions(traderPositions);
+                        this.UpdateUntakedPositions(traderPositions);
+                    }
                     this.UpdateUnclosedPositions(traderPositions);
                     this.UpdateUnalteredPositions(traderPositions);
                     this.ClosePositions();
@@ -178,9 +243,18 @@ namespace BuyEnhancedServer.Binance
                         position.display();
                     }
 
-                    Thread.Sleep(3000);
+                    if (this.state == State.stopped) { break; }
 
+                    if (this.state == State.softStopped && this.botPositions.Count == 0)
+                    {
+                        this.Stop();
+                        break;
+                    }
+
+                    Thread.Sleep(3000);
                 }
+
+                this.bybitManager.closeAllPositions();
             }
             catch(Exception ex)
             {
@@ -777,7 +851,7 @@ namespace BuyEnhancedServer.Binance
         }
 
 
-        private void SetPositions()
+        public void SetPositions()
         {
             List<Position> liste = new ();
 

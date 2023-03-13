@@ -742,8 +742,97 @@ namespace BuyEnhancedServer.Bybit
                 }
             }
 
-            Log.TraceError("BybitManager.verifyAuthentificationInformations", "Impossible d'obtenir le solde disponible sur le compte");
-            throw new Exception("Impossible d'obtenir le solde disponible sur le compte");
+            Log.TraceError("BybitManager.verifyAuthentificationInformations", "Impossible de vérifier les informations d'authentification");
+            throw new Exception("Impossible de vérifier les informations d'authentification");
+        }
+
+        /*
+        *    Nom : getAllPositions
+        *    Retour : Une liste de toutes les positions
+        *    Paramètre E : aucun
+        *    Role : retourner la liste de toutes les positions en cours
+        *    Fiabilité : Possibilité de lever une Exception
+        */
+        public List<Position> getAllPositions()
+        {
+            Log.TraceInformation("BybitManager.getAllPositions", "Appel");
+
+            string paramStr = "category=linear&settleCoin=USDT";
+
+            BybitRequest bybitRequest = new(paramStr);
+
+            RestResponse response;
+
+            for (int i = 1; i <= 5; i++)
+            {
+                try
+                {
+                    RestRequest restRequest = this.PrepareRequest("/v5/position/list", bybitRequest);
+
+                    response = this.restClient.Get(restRequest);
+
+                    //decommenter pour afficher la réponse au format JSON
+                    //Console.WriteLine(response.Content);
+
+                    if (response.Content != null)
+                    {
+                        JObject jsonResponse = JObject.Parse(response.Content);
+
+                        if (jsonResponse["retCode"] != null)
+                        {
+                            if ((int)jsonResponse["retCode"]! != 0)
+                            {
+                                throw new BybitException((int)jsonResponse["retCode"]!, (string)jsonResponse["retMsg"]!);
+                            }
+
+                            var positionList = jsonResponse["result"]!["list"]!.Children().ToList();
+
+                            List<Position> positions = new List<Position>();
+
+                            foreach (JToken position in positionList)
+                            {
+                                //Console.WriteLine(position);
+                                positions.Add(new Position((string)position["symbol"]!, (double)position["markPrice"]!, (string)position["updatedTime"]!, 0, (string)position["side"]!, (double)position["size"]!, (int)position["positionIdx"]!));
+                            }
+
+                            return positions;
+
+                            throw new Exception("Impossible de trouver la taille de la position demandée --> Essai numéro " + i.ToString());
+                        }
+                    }
+
+                    throw new Exception("Réponse de l'API bybit incorrecte : un champ utilisé semble null");
+                }
+                catch (BybitException ex)
+                {
+                    Console.WriteLine("BybitManager --> getAllPositions --> Erreur avec la communication Bybit\nCode d'erreur : " + ex.code.ToString() + "Message : " + ex.Message);
+                    Log.TraceWarning("BybitManager.getAllPositions", "Erreur avec la communication Bybit\nCode d'erreur : " + ex.code.ToString() + "Message : " + ex.Message);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("BybitManager --> getAllPositions --> Erreur\nMessage: " + ex.Message);
+                    Log.TraceWarning("BybitManager.getAllPositions", "Erreur\nMessage: " + ex.Message);
+                }
+            }
+
+            Log.TraceError("BybitManager.getAllPositions", "Impossible de trouver la liste des positions");
+            throw new Exception("Impossible de trouver la liste des positions");
+        }
+
+        /*
+        *    Nom : closeAllPositions
+        *    Paramètre E : aucun
+        *    Role : fermer toutes les positions en cours
+        *    Fiabilité : Possibilité de lever une Exception
+        */
+        public void closeAllPositions()
+        {
+            List<Position> positions = this.getAllPositions();
+
+            foreach (Position position in positions)
+            {
+                this.ClosePosition(position);
+            }
         }
     }
 }

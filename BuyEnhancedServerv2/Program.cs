@@ -4,6 +4,7 @@ using BuyEnhancedServer;
 using BuyEnhancedServer.Binance;
 using BuyEnhancedServer.Bybit;
 using BuyEnhancedServer.Proxies;
+using BuyEnhancedServerv2.Utils;
 using Microsoft.VisualBasic;
 using Newtonsoft.Json.Linq;
 using RestSharp;
@@ -312,8 +313,14 @@ remove.isGoodProxy(null);*/
 
 //Console.WriteLine(BybitManager.verifyAuthentificationInformations("SpF1bwKBaAWuEWbkxX", "d39sjQb4coXGnQ2yg43SGUWIIQ7NQ6eglrWj"));
 
-//___________________________________TRADE______________________________________
+//___________________________________TEST closeAllPositions de BybitManager______________________________________
 /*
+BybitManager manager = new("QVFHFBNTZMVTCKPDWX", "EJPBUSLHKXTHCJGYVYHWGBVCPNAWWCTDCONB");
+
+manager.closeAllPositions();
+*/
+//___________________________________TRADE______________________________________
+
 namespace BuyEnhancedServer
 {
     class Program
@@ -326,28 +333,26 @@ namespace BuyEnhancedServer
 
             RemoveInvalidProxiesThread remove = new(ref list);
 
-            string api_key = "SpF1bwKBaAWuEWbkxX";
-            string api_secret = "d39sjQb4coXGnQ2yg43SGUWIIQ7NQ6eglrWj";
+            string api_key = "QVFHFBNTZMVTCKPDWX";
+            string api_secret = "EJPBUSLHKXTHCJGYVYHWGBVCPNAWWCTDCONB";
 
             Trader trader = new("EE4F67875522537CAF940E5BDA96AF2C", ref list, api_key, api_secret);
 
-            Thread removeThread = new(remove.run);
-            removeThread.Start();
+            remove.Start();
 
             add.Start();
-
+            
             while (list.count() < 5)
             {
 
             }
 
-            Thread traderThread = new(trader.Run);
-            traderThread.Start();
+            trader.Start();
 
             return;
         }
     }
-}*/
+}
 
 
 //___________________________________PROXY______________________________________
