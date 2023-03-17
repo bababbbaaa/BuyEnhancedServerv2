@@ -22,6 +22,8 @@ namespace BuyEnhancedServer.Proxies
    */
     internal class RemoveInvalidProxiesThread
     {
+        //unique instance de RemoveInvalidProxiesThread
+        private static RemoveInvalidProxiesThread? remove;
         // proxyList : objet de type ProxyList qui permet de stocker et manipuler une liste de WebProxy (ProxyList.list)
         private ProxyList proxyList;
         // timeout : nombre entier qui correspond au nombre de millisecondes écoulé à partir duquel on considère un proxy comme invalide
@@ -31,6 +33,25 @@ namespace BuyEnhancedServer.Proxies
         //Thread pour lancer en parallèle l'ajout de proxy
         Thread thread;
 
+
+
+        /*
+        *    Nom : Instance
+        *    Role : Créer l'unique objet statique de type RemoveInvalidProxiesThread
+        *    Fiabilité : Sure
+        */
+        public static RemoveInvalidProxiesThread Instance(ref ProxyList aProxyList, int aTimeout = 3000)
+        {
+            Log.TraceInformation("RemoveInvalidProxiesThread.Instance", "Appel");
+
+            if (RemoveInvalidProxiesThread.remove == null)
+            {
+                RemoveInvalidProxiesThread.remove = new RemoveInvalidProxiesThread(ref aProxyList, aTimeout);
+            }
+
+            return RemoveInvalidProxiesThread.remove;
+        }
+
         /*
         *    Nom : RemoveInvalidProxiesThread (Constructeur)
         *    Paramètre E : [timeout] correspondant au nombre de millisecondes pour le test d'un proxy
@@ -38,7 +59,7 @@ namespace BuyEnhancedServer.Proxies
         *    Role : Créer un objet de type AddNewValidProxiesThread
         *    Fiabilité : Sure
         */
-        public RemoveInvalidProxiesThread(ref ProxyList aProxyList, int aTimeout = 3000) 
+        private RemoveInvalidProxiesThread(ref ProxyList aProxyList, int aTimeout) 
         {
             Log.TraceInformation("RemoveInvalidProxiesThread", "Appel du constructeur");
 
@@ -69,6 +90,8 @@ namespace BuyEnhancedServer.Proxies
         {
             Log.TraceInformation("RemoveInvalidProxiesThread.Stop", "Appel");
             this.state = false;
+            while (this.isActiv()) ;
+            this.thread = new(this.run);
         }
 
         /*
@@ -109,8 +132,9 @@ namespace BuyEnhancedServer.Proxies
                         //On parcourt la liste, si un proxy n'est pas valide on le supprime
                         while (i < this.proxyList.count())
                         {
+                            if (!this.state) { return; }
                             Console.WriteLine("Nombre de proxy valide : " + this.proxyList.count().ToString());
-                                                        
+
                             if (!(this.isGoodProxy(this.proxyList.elementAt(i))))
                             {
                                 this.proxyList.remove(i);
@@ -118,7 +142,6 @@ namespace BuyEnhancedServer.Proxies
                             }
 
                             this.proxyList.ReleaseMutex();
-                            if (!this.state) { return; }
                             i++;
                             this.proxyList.WaitOne();
                         }

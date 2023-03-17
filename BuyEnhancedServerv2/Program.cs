@@ -1,10 +1,14 @@
 // See https://aka.ms/new-console-template for more information
+using AngleSharp.Io;
 using AngleSharp.Text;
 using BuyEnhancedServer;
 using BuyEnhancedServer.Binance;
 using BuyEnhancedServer.Bybit;
 using BuyEnhancedServer.Proxies;
+using BuyEnhancedServerv2.Service;
 using BuyEnhancedServerv2.Utils;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualBasic;
 using Newtonsoft.Json.Linq;
 using RestSharp;
@@ -17,6 +21,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.NetworkInformation;
 using System.Reflection.Metadata;
+using System.Text;
 using System.Threading;
 
 
@@ -180,7 +185,7 @@ tradeManager.ClosePosition(pos1);
 /*
 BybitManager tradeManager = new BybitManager("SpF1bwKBaAWuEWbkxX", "d39sjQb4coXGnQ2yg43SGUWIIQ7NQ6eglrWj");
 
-//Console.WriteLine(tradeManager.GetBalanceUSD());
+Console.WriteLine(tradeManager.GetBalanceUSD());
 
 //attention elle est privée
 //tradeManager.switchToHedgeMode();
@@ -320,7 +325,7 @@ BybitManager manager = new("QVFHFBNTZMVTCKPDWX", "EJPBUSLHKXTHCJGYVYHWGBVCPNAWWC
 manager.closeAllPositions();
 */
 //___________________________________TRADE______________________________________
-
+/*
 namespace BuyEnhancedServer
 {
     class Program
@@ -353,29 +358,56 @@ namespace BuyEnhancedServer
         }
     }
 }
-
+*/
 
 //___________________________________PROXY______________________________________
 /*
 ProxyList list = ProxyList.Instance();
 
-AddNewValidProxiesThread add = new (ref list);
-RemoveInvalidProxiesThread remove = new (ref list);
+AddNewValidProxiesThread add = AddNewValidProxiesThread.Instance(ref list);
+RemoveInvalidProxiesThread remove = RemoveInvalidProxiesThread.Instance(ref list);
 
 remove.Start();
 add.Start();
-
-Thread.Sleep(60000);
-
-remove.Stop();
-add.Stop();
 */
 //___________________________________API______________________________________
-/*
+
+const string MyAllowSpecificOrigins = "AllowSpecificOrigins";
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+                      policy =>
+                      {
+                          policy.WithOrigins("*");
+                      });
+});
+
 var app = builder.Build();
+app.UseCors(MyAllowSpecificOrigins);
+
+Server server = Server.Instance();
 
 app.MapGet("/", () => "Hello World!");
 
+app.MapGet("/proxyCount", server.getProxyCount);
+
+async Task myWaiter(HttpContext context)
+{
+    using (StreamReader reader = new StreamReader(context.Request.Body, Encoding.UTF8))
+    {
+        string jsonstring = await reader.ReadToEndAsync();
+
+        JObject jsonResponse = JObject.Parse(jsonstring);
+
+        Console.WriteLine((string)jsonResponse["anEncryptedUid"]);
+        Console.WriteLine((string)jsonResponse["anApiKey"]);
+        Console.WriteLine((string)jsonResponse["anApiSecret"]);
+    }
+}
+
+app.MapPost("/post", server.areValidInformations);
+
 app.Run();
-*/

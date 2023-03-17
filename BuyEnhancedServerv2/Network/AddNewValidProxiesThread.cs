@@ -37,6 +37,8 @@ namespace BuyEnhancedServer.Proxies
    */
     internal class AddNewValidProxiesThread
     {
+        //unique instance de AddNewValidProxiesThread
+        private static AddNewValidProxiesThread? add;
         // proxyList : objet de type ProxyList qui permet de stocker et manipuler une liste de WebProxy (ProxyList.list)
         private ProxyList proxyList;
         // timeout : nombre entier qui correspond au nombre de millisecondes écoulé à partir duquel on considère un proxy comme invalide
@@ -48,6 +50,25 @@ namespace BuyEnhancedServer.Proxies
         //Thread pour lancer en parallèle l'ajout de proxy
         Thread thread;
 
+
+        /*
+        *    Nom : Instance
+        *    Role : Créer l'unique objet statique de type AddNewValidProxiesThread
+        *    Fiabilité : Sure
+        */
+        public static AddNewValidProxiesThread Instance(ref ProxyList aProxyList, int aTimeout = 3000)
+        {
+            Log.TraceInformation("AddNewValidProxiesThread.Instance", "Appel");
+
+            if (AddNewValidProxiesThread.add == null)
+            {
+                AddNewValidProxiesThread.add = new AddNewValidProxiesThread(ref aProxyList, aTimeout);
+            }
+
+            return AddNewValidProxiesThread.add;
+        }
+
+
         /*
         *    Nom : AddNewValidProxiesThread (Constructeur)
         *    Paramètre E : [timeout] correspondant au nombre de millisecondes pour le test d'un proxy
@@ -55,7 +76,7 @@ namespace BuyEnhancedServer.Proxies
         *    Role : Créer un objet de type AddNewValidProxiesThread
         *    Fiabilité : sure
         */
-        public AddNewValidProxiesThread(ref ProxyList aProxyList, int aTimeout = 3000)
+        private AddNewValidProxiesThread(ref ProxyList aProxyList, int aTimeout = 3000)
         {
             Log.TraceInformation("AddNewValidProxiesThread", "Appel du constructeur");
 
@@ -110,6 +131,8 @@ namespace BuyEnhancedServer.Proxies
         {
             Log.TraceInformation("AddNewValidProxiesThread.Stop", "Appel");
             this.state = false;
+            while (this.isActiv()) ;
+            this.thread = new(this.run);
         }
 
         /*
