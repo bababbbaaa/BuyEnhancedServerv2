@@ -334,9 +334,9 @@ namespace BuyEnhancedServer
         {
             ProxyList list = ProxyList.Instance();
 
-            AddNewValidProxiesThread add = new(ref list);
+            AddNewValidProxiesThread add = AddNewValidProxiesThread.Instance(ref list);
 
-            RemoveInvalidProxiesThread remove = new(ref list);
+            RemoveInvalidProxiesThread remove = RemoveInvalidProxiesThread.Instance(ref list);
 
             string api_key = "QVFHFBNTZMVTCKPDWX";
             string api_secret = "EJPBUSLHKXTHCJGYVYHWGBVCPNAWWCTDCONB";
@@ -358,8 +358,8 @@ namespace BuyEnhancedServer
         }
     }
 }
-*/
 
+*/
 //___________________________________PROXY______________________________________
 /*
 ProxyList list = ProxyList.Instance();
@@ -394,20 +394,29 @@ app.MapGet("/", () => "Hello World!");
 
 app.MapGet("/proxyCount", server.getProxyCount);
 
-async Task myWaiter(HttpContext context)
-{
-    using (StreamReader reader = new StreamReader(context.Request.Body, Encoding.UTF8))
-    {
-        string jsonstring = await reader.ReadToEndAsync();
+app.MapGet("/isRemoveActiv", server.isRemoveActiv);
 
-        JObject jsonResponse = JObject.Parse(jsonstring);
+app.MapGet("/startRemove", server.startRemove);
 
-        Console.WriteLine((string)jsonResponse["anEncryptedUid"]);
-        Console.WriteLine((string)jsonResponse["anApiKey"]);
-        Console.WriteLine((string)jsonResponse["anApiSecret"]);
-    }
-}
+app.MapGet("/stopRemove", server.stopRemove);
 
-app.MapPost("/post", server.areValidInformations);
+app.MapGet("/isAddActiv", server.isAddActiv);
+
+app.MapGet("/startAdd", server.startAdd);
+
+app.MapGet("/stopAdd", server.stopAdd);
+
+app.MapGet("/getSubscriptionList", server.getSubscriptionList);
+
+app.MapPost("/areValidInformations", server.areValidInformations);
+
+app.MapPost("/launchSubcription", server.launchSubcription);
+
+app.MapPost("/brutalStop", server.brutalStop);
+
+app.MapPost("/softStop", server.softStop);
+
+app.MapPost("/getTraderState", server.getTraderState);
+
 
 app.Run();

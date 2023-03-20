@@ -162,6 +162,8 @@ namespace BuyEnhancedServer.Binance
         {
             Log.TraceInformation("Trader.Stop", "Appel");
             this.state = State.stopped;
+            while (this.isActiv()) ;
+            this.thread = new(this.run);
         }
 
         /*
@@ -733,34 +735,35 @@ namespace BuyEnhancedServer.Binance
                 if(retour == 0)
                 {
                     Console.WriteLine("position modifie : " + this.unalteredPositions.ElementAt(0).symbol);
-
-                    foreach(Position botPosition in this.botPositions) 
-                    {
-                        foreach(Position traderPosition in traderPositions)
-                        {
-                            if (botPosition.isSamePosition(traderPosition))
-                            {
-                                botPosition.size = traderPosition.size;
-                                break;
-                            }
-                        }
-                    }
-
-                    this.unalteredPositions.RemoveAt(0);
+                    Log.TraceWarning("Trader.AlterPositions", "Position modifie : "+ this.unalteredPositions.ElementAt(0).symbol);
                 }
                 else
                 {
-                    Console.WriteLine("Trader --> AlterPositions --> Erreur lors de la modification de la taille de la position");
-                    Log.TraceWarning("Trader.AlterPositions", "Erreur lors de la modification de la taille de la position");
+                    Console.WriteLine("Trader --> AlterPositions --> Erreur lors de la modification de la taille de la position, la position ne sera pas modifié");
+                    Log.TraceWarning("Trader.AlterPositions", "Erreur lors de la modification de la taille de la position, la position ne sera pas modifié");
                 }
+
+                foreach (Position botPosition in this.botPositions)
+                {
+                    foreach (Position traderPosition in traderPositions)
+                    {
+                        if (botPosition.isSamePosition(traderPosition))
+                        {
+                            botPosition.size = traderPosition.size;
+                            break;
+                        }
+                    }
+                }
+
+                this.unalteredPositions.RemoveAt(0);
             }
         }
 
 
         /*
-        *    Nom : GetPositionsJSON
-        *    Retour : la liste des positions courrantes du trader au format JSON
-        *    Role : Obtenir la liste des positions courrantes du trader au format JSON
+        *    Nom : verifyEncryptedUid
+        *    Retour : booléen indiquant si les informations sont valides
+        *    Role : vérifier la validité des informations
         *    Fiabilite : Possibilité de lever une Exception
         */
         static public bool verifyEncryptedUid(string anEncryptedUid)
@@ -830,7 +833,14 @@ namespace BuyEnhancedServer.Binance
             throw new Exception("GetPositionsJSON : Impossible de récupérer les positions du Trader");
         }
 
+        /*
+        *    Nom : verifyEncryptedUid
+        *    Retour : booléen indiquant si les informations sont valides
+        *    Role : vérifier la validité des informations
+        *    Fiabilite : Possibilité de lever une Exception
+        */
 
+        public State GetState() { return state; }
 
 
         //_____________________________________________________FONCTIONS DE TESTS________________________________________________________________
