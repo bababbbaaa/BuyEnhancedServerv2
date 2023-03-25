@@ -5,8 +5,9 @@ using BuyEnhancedServer;
 using BuyEnhancedServer.Binance;
 using BuyEnhancedServer.Bybit;
 using BuyEnhancedServer.Proxies;
-using BuyEnhancedServerv2.Service;
+using BuyEnhancedServerv2.API;
 using BuyEnhancedServerv2.Utils;
+using BuyEnhancedServerv2.WebSocketController;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualBasic;
@@ -371,7 +372,7 @@ remove.Start();
 add.Start();
 */
 //___________________________________API______________________________________
-
+/*
 const string MyAllowSpecificOrigins = "AllowSpecificOrigins";
 
 var builder = WebApplication.CreateBuilder(args);
@@ -388,7 +389,7 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 app.UseCors(MyAllowSpecificOrigins);
 
-Server server = Server.Instance();
+API server = API.Instance();
 
 app.MapGet("/", () => "Hello World!");
 
@@ -418,5 +419,34 @@ app.MapPost("/softStop", server.softStop);
 
 app.MapPost("/getTraderState", server.getTraderState);
 
-
 app.Run();
+*/
+
+//___________________________________WS______________________________________
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+
+var app = builder.Build();
+
+// <snippet_UseWebSockets>
+var webSocketOptions = new WebSocketOptions
+{
+    KeepAliveInterval = TimeSpan.FromSeconds(30)
+};
+
+app.UseWebSockets(webSocketOptions);
+
+app.MapControllers();
+
+Thread thread = new Thread(app.Run);
+
+thread.Start();
+
+while (true)
+{
+    await WebSocketController.SendToAdd("Bonjour je suis heureux de vous annoncer que vous avez casse le game");
+
+    Thread.Sleep(1000);
+}

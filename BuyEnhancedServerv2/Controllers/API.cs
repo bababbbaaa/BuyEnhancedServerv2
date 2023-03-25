@@ -8,11 +8,11 @@ using System.Text;
 using System.Text.Json;
 using System.Xml.Linq;
 
-namespace BuyEnhancedServerv2.Service
+namespace BuyEnhancedServerv2.API
 {
-    public class Server
+    public class API
     {
-        private static Server? server;
+        private static API? server;
         ProxyList list;
         AddNewValidProxiesThread add;
         RemoveInvalidProxiesThread remove;
@@ -23,19 +23,19 @@ namespace BuyEnhancedServerv2.Service
         *    Role : Créer l'unique objet statique de type Server
         *    Fiabilité : Sure
         */
-        public static Server Instance()
+        public static API Instance()
         {
             Log.TraceInformation("Server.Instance", "Appel");
 
-            if (Server.server == null)
+            if (API.server == null)
             {
-                Server.server = new Server();
+                API.server = new API();
             }
 
-            return Server.server;
+            return API.server;
         }
 
-        private Server() 
+        private API() 
         {
             this.list = ProxyList.Instance();
 
