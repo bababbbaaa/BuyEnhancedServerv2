@@ -419,7 +419,7 @@ app.MapPost("/brutalStop", server.brutalStop);
 
 app.MapPost("/softStop", server.softStop);
 
-app.MapPost("/getTraderState", server.getTraderState);
+app.MapPost("/deleteTrader", server.deleteTrader);
 
 app.Run();
 

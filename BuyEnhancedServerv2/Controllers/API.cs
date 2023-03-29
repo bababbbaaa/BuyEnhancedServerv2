@@ -413,7 +413,7 @@ namespace BuyEnhancedServerv2.API
             }
         }
 
-        public Object getTraderState(HttpContext context)
+        public Object deleteTrader(HttpContext context)
         {
             try
             {
@@ -423,61 +423,36 @@ namespace BuyEnhancedServerv2.API
                 {
                     JObject jsonResponse = JObject.Parse(reader.ReadToEndAsync().WaitAsync(TimeSpan.FromMilliseconds(5000)).Result);
 
-                    if(jsonResponse["anEncryptedUid"] != null)
+                    if (jsonResponse["anEncryptedUid"] != null)
                     {
-                        anEncryptedUid = (string)jsonResponse["anEncryptedUid"];
+                        anEncryptedUid = (string)jsonResponse["anEncryptedUid"]!;
 
                         if (this.subscriptions.ContainsKey(anEncryptedUid))
                         {
+                            subscriptions.Remove(anEncryptedUid);
 
-                            string state;
-
-                            switch (this.subscriptions[anEncryptedUid].GetState())
-                            {
-                                case State.running:
-                                    state = "running";
-                                    break;
-                                case State.softStopped:
-                                    state = "soft stop";
-                                    break;
-                                case State.stopped:
-                                    state = "stopped";
-                                    break;
-                                default:
-                                    state = "unknown";
-                                    break;
-                            }
-
-                            return new
-                            {
-                                retCode = 0,
-                                result = new
-                                {
-                                    isActiv = this.subscriptions[anEncryptedUid].isActiv(),
-                                    state = state,
-                                }
-                            };
+                            return new { retCode = 0, retMessage = "Trader supprimé avec succès" };
                         }
-                        
+
                         return new
                         {
                             retCode = 6,
-                            retMessage = "Aucun trader avec ces informations n'est enregistré"
+                            retMessage = "Le trader n'est pas enregistré"
                         };
                     }
-
-                    return new
-                    {
-                        retCode = 1,
-                        retMessage = "Le requête semble invalide"
-                    };
-
                 }
+
+                return new
+                {
+                    retCode = 1,
+                    retMessage = "Le requête semble invalide"
+                };
             }
             catch (Exception e)
             {
                 return new { retCode = 2, retMessage = e.ToString() };
             }
+
         }
     }
 }
