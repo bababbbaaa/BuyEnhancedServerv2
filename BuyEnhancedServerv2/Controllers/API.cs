@@ -346,11 +346,7 @@ namespace BuyEnhancedServerv2.API
 
                         if (this.subscriptions.ContainsKey(anEncryptedUid))
                         {
-                            Console.WriteLine("debut stop");
-
                             this.subscriptions[anEncryptedUid].Stop();
-
-                            Console.WriteLine("fin stop");
 
                             return new { retCode = 0, retMessage = "Souscription arrêtée avec succès" };
                         }
