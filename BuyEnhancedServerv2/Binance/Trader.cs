@@ -186,7 +186,8 @@ namespace BuyEnhancedServer.Binance
         public bool isActiv()
         {
             Log.TraceInformation("Trader.IsAlive", "Appel");
-            return this.thread.IsAlive;
+
+            return (this.thread.ThreadState == ThreadState.Running);
         }
 
         /*
@@ -735,7 +736,7 @@ namespace BuyEnhancedServer.Binance
                 if(retour == 0)
                 {
                     Console.WriteLine("position modifie : " + this.unalteredPositions.ElementAt(0).symbol);
-                    Log.TraceWarning("Trader.AlterPositions", "Position modifie : "+ this.unalteredPositions.ElementAt(0).symbol);
+                    Log.TraceInformation("Trader.AlterPositions", "Position modifie : "+ this.unalteredPositions.ElementAt(0).symbol);
                 }
                 else
                 {

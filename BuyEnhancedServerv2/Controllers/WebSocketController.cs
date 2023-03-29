@@ -9,25 +9,43 @@ namespace BuyEnhancedServerv2.WebSocketController
     public class WebSocketController : ControllerBase
     {
         static private bool addState;
+        static private bool removeState;
+        static private bool traderState;
 
         static private WebSocket? webSocket;
 
         public WebSocketController()
         {
-            WebSocketController.addState = false;
+            addState = false;
+            removeState = false;
+            traderState = false;
         }
 
         [Route("/add")]
-        public async Task Get()
+        public async Task Add()
         {
-            if (HttpContext.WebSockets.IsWebSocketRequest)
+            if(webSocket != null)
             {
-                webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+                if (webSocket.State == WebSocketState.Closed)
+                {
+                    addState = false;
+                    removeState = false;
+                    traderState = false;
+                }
+            }
 
+            if(!isWebSocketAvailable())
+            {
+                HttpContext.Response.StatusCode = StatusCodes.Status409Conflict;
+            }
+            else if (HttpContext.WebSockets.IsWebSocketRequest)
+            {
                 addState = true;
 
-                Thread thread = new(this.listenForDisconnectFromAdd!);
-                thread.Start(webSocket);
+                webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+
+                Thread thread = new(this.listenForDisconnectFromSocket!);
+                thread.Start();
 
                 while (addState) ;
             }
@@ -37,11 +55,78 @@ namespace BuyEnhancedServerv2.WebSocketController
             }
         }
 
-        private void listenForDisconnectFromAdd(Object aWebSocket)
+        [Route("/remove")]
+        public async Task Remove()
         {
-            WebSocket webSocket = (WebSocket)aWebSocket;
+            if (webSocket != null)
+            {
+                if (webSocket.State == WebSocketState.Closed)
+                {
+                    addState = false;
+                    removeState = false;
+                    traderState = false;
+                }
+            }
 
-            if (webSocket != null && addState)
+            if (!isWebSocketAvailable())
+            {
+                HttpContext.Response.StatusCode = StatusCodes.Status409Conflict;
+            }
+            else if (HttpContext.WebSockets.IsWebSocketRequest)
+            {
+                removeState = true;
+
+                webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+
+                Thread thread = new(this.listenForDisconnectFromSocket!);
+                thread.Start();
+
+                while (removeState) ;
+            }
+            else
+            {
+                HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+            }
+        }
+
+        [Route("/trader")]
+        public async Task Trader()
+        {
+            if (webSocket != null)
+            {
+                if (webSocket.State == WebSocketState.Closed)
+                {
+                    addState = false;
+                    removeState = false;
+                    traderState = false;
+                }
+            }
+
+            if (!isWebSocketAvailable())
+            {
+                HttpContext.Response.StatusCode = StatusCodes.Status409Conflict;
+            }
+            else if (HttpContext.WebSockets.IsWebSocketRequest)
+            {
+                traderState = true;
+
+                webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+
+                Thread thread = new(this.listenForDisconnectFromSocket!);
+                thread.Start();
+
+                while (traderState) ;
+            }
+            else
+            {
+                HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+            }
+        }
+
+        private void listenForDisconnectFromSocket()
+        {
+
+            if (webSocket != null && !isWebSocketAvailable())
             {
                 var buffer = new byte[1024 * 4];
                 var receiveResult = webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
@@ -57,12 +142,18 @@ namespace BuyEnhancedServerv2.WebSocketController
                             {
                                 webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "fin de la connexion", CancellationToken.None).WaitAsync(CancellationToken.None);
                                 addState = false;
+                                removeState = false;
+                                traderState = false;
                                 break;
                             }
                         }
                         catch
                         {
-                            Console.WriteLine("Impossible de récuperer le message recu");
+                            Console.WriteLine("Erreur lors de la récupération du message ou conflit");
+                            webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "fin de la connexion", CancellationToken.None).WaitAsync(CancellationToken.None);
+                            addState = false;
+                            removeState = false;
+                            break;
                         }
                     }
                 }
@@ -79,9 +170,28 @@ namespace BuyEnhancedServerv2.WebSocketController
             }
         }
 
-        static public bool isAddConnected()
+        static public async Task SendToRemove(string message)
         {
-            return addState;
+            if (removeState)
+            {
+                ArraySegment<byte> text = Encoding.ASCII.GetBytes(message);
+
+                await webSocket!.SendAsync(text, WebSocketMessageType.Text, true, CancellationToken.None);
+            }
+        }
+        static public async Task SendToTrader(string message)
+        {
+            if (traderState)
+            {
+                ArraySegment<byte> text = Encoding.ASCII.GetBytes(message);
+
+                await webSocket!.SendAsync(text, WebSocketMessageType.Text, true, CancellationToken.None);
+            }
+        }
+
+        static public bool isWebSocketAvailable()
+        {
+            return !(addState || removeState || traderState);
         }
     };
 }

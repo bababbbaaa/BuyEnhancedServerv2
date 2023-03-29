@@ -144,7 +144,7 @@ namespace BuyEnhancedServer.Proxies
         public bool isActiv()
         {
             Log.TraceInformation("AddNewValidProxiesThread.IsAlive", "Appel");
-            return this.thread.IsAlive;
+            return (this.thread.ThreadState == ThreadState.Running);
         }
 
 

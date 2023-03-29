@@ -138,15 +138,36 @@ namespace BuyEnhancedServerv2.API
 
         public Object getSubscriptionList()
         {
-            Console.WriteLine("exec");
-
             try
             {
-                List<string> subscriptionList = new List<string>();
+                List<Object> subscriptionList = new List<Object>();
 
-                foreach(string s in this.subscriptions.Keys)
+                foreach(string anEncryptedUid in this.subscriptions.Keys)
                 {
-                    subscriptionList.Add(s);
+                    string state;
+
+                    switch (this.subscriptions[anEncryptedUid].GetState())
+                    {
+                        case State.running:
+                            state = "running";
+                            break;
+                        case State.softStopped:
+                            state = "soft stop";
+                            break;
+                        case State.stopped:
+                            state = "stopped";
+                            break;
+                        default:
+                            state = "unknown";
+                            break;
+                    }
+
+                    subscriptionList.Add(new
+                    {
+                        encryptedUid = anEncryptedUid,
+                        state = state,
+                        isActiv = this.subscriptions[anEncryptedUid].isActiv()
+                    });
                 }
 
                 return new { retCode = 0 , result = new { list = subscriptionList } };
@@ -194,45 +215,38 @@ namespace BuyEnhancedServerv2.API
             }
         }
 
-        public Object launchSubcription(HttpContext context)
+        public Object addTrader(HttpContext context)
         {
             try
             {
                 string anEncryptedUid, anApiKey, anApiSecret;
+                int aPourcentage;
 
                 using (StreamReader reader = new StreamReader(context.Request.Body, Encoding.UTF8))
                 {
                     JObject jsonResponse = JObject.Parse(reader.ReadToEndAsync().WaitAsync(TimeSpan.FromMilliseconds(5000)).Result);
 
-                    if (jsonResponse["anEncryptedUid"] != null && jsonResponse["anApiKey"] != null && jsonResponse["anApiSecret"] != null)
+                    if (jsonResponse["anEncryptedUid"] != null && jsonResponse["anApiKey"] != null && jsonResponse["anApiSecret"] != null && jsonResponse["aPourcentage"] != null)
                     {
                         anEncryptedUid = (string)jsonResponse["anEncryptedUid"]!;
                         anApiKey = (string)jsonResponse["anApiKey"]!;
                         anApiSecret = (string)jsonResponse["anApiSecret"]!;
+                        aPourcentage = (int)jsonResponse["aPourcentage"]!;
 
                         if (Trader.verifyEncryptedUid(anEncryptedUid) && BybitManager.verifyAuthentificationInformations(anApiKey, anApiSecret))
                         {
 
                             if (!this.subscriptions.ContainsKey(anEncryptedUid))
                             {
-                                this.subscriptions.Add(anEncryptedUid, new Trader(anEncryptedUid, ref this.list, anApiKey, anApiSecret));
+                                this.subscriptions.Add(anEncryptedUid, new Trader(anEncryptedUid, ref this.list, anApiKey, anApiSecret, aPourcentage));
 
-                                subscriptions[anEncryptedUid].Start();
-
-                                return new { retCode = 0, retMessage = "Souscription initialisé avec succès" };
-                            }
-
-                            if (!this.subscriptions[anEncryptedUid].isActiv())
-                            {
-                                subscriptions[anEncryptedUid].Start();
-
-                                return new { retCode = 0, retMessage = "Souscription initialisé avec succès" };
+                                return new { retCode = 0, retMessage = "Trader ajouté avec succès" };
                             }
 
                             return new
                             {
-                                retCode = 5,
-                                retMessage = "La souscription est déjà lancé"
+                                retCode = 7,
+                                retMessage = "Une souscription pour ce trader existe déjà"
                             };
                         }
 
@@ -240,6 +254,66 @@ namespace BuyEnhancedServerv2.API
                         {
                             retCode = 4,
                             retMessage = "Les informations d'authentification à l'api ou l'identifiant du trader est incorrect"
+                        };
+                    }
+                }
+
+                return new
+                {
+                    retCode = 1,
+                    retMessage = "Le requête semble invalide"
+                };
+            }
+            catch (Exception e)
+            {
+                return new { retCode = 2, retMessage = e.ToString() };
+            }
+        }
+
+        public Object launchSubscription(HttpContext context)
+        {
+            try
+            {
+                string anEncryptedUid;
+
+                using (StreamReader reader = new StreamReader(context.Request.Body, Encoding.UTF8))
+                {
+                    JObject jsonResponse = JObject.Parse(reader.ReadToEndAsync().WaitAsync(TimeSpan.FromMilliseconds(5000)).Result);
+
+                    if (jsonResponse["anEncryptedUid"] != null)
+                    {
+                        anEncryptedUid = (string)jsonResponse["anEncryptedUid"]!;
+
+                        if (this.subscriptions.ContainsKey(anEncryptedUid))
+                        {
+                            if(Trader.verifyEncryptedUid(anEncryptedUid))
+                            {
+                                if (!this.subscriptions[anEncryptedUid].isActiv())
+                                {
+                                    subscriptions[anEncryptedUid].Start();
+
+                                    return new { retCode = 0, retMessage = "Souscription lancée avec succès" };
+                                }
+
+                                return new
+                                {
+                                    retCode = 5,
+                                    retMessage = "La souscription est déjà lancé"
+                                };
+                            }
+
+                            return new
+                            {
+                                retCode = 4,
+                                retMessage = "Les informations d'authentification à l'api ou l'identifiant du trader est incorrect"
+                            };
+
+                        }
+
+                        return new
+                        {
+                            retCode = 6,
+                            retMessage = "Le trader n'est pas enregistré"
                         };
                     }
                 }
@@ -268,11 +342,15 @@ namespace BuyEnhancedServerv2.API
 
                     if(jsonResponse["anEncryptedUid"] != null)
                     {
-                        anEncryptedUid = (string)jsonResponse["anEncryptedUid"];
+                        anEncryptedUid = (string)jsonResponse["anEncryptedUid"]!;
 
                         if (this.subscriptions.ContainsKey(anEncryptedUid))
                         {
+                            Console.WriteLine("debut stop");
+
                             this.subscriptions[anEncryptedUid].Stop();
+
+                            Console.WriteLine("fin stop");
 
                             return new { retCode = 0, retMessage = "Souscription arrêtée avec succès" };
                         }
@@ -387,12 +465,8 @@ namespace BuyEnhancedServerv2.API
                         
                         return new
                         {
-                            retCode = 0,
-                            result = new
-                            {
-                                isActiv = false,
-                                state = "stopped",
-                            }
+                            retCode = 6,
+                            retMessage = "Aucun trader avec ces informations n'est enregistré"
                         };
                     }
 

@@ -372,7 +372,7 @@ remove.Start();
 add.Start();
 */
 //___________________________________API______________________________________
-/*
+
 const string MyAllowSpecificOrigins = "AllowSpecificOrigins";
 
 var builder = WebApplication.CreateBuilder(args);
@@ -411,7 +411,9 @@ app.MapGet("/getSubscriptionList", server.getSubscriptionList);
 
 app.MapPost("/areValidInformations", server.areValidInformations);
 
-app.MapPost("/launchSubcription", server.launchSubcription);
+app.MapPost("/addTrader", server.addTrader);
+
+app.MapPost("/launchSubscription", server.launchSubscription);
 
 app.MapPost("/brutalStop", server.brutalStop);
 
@@ -420,10 +422,10 @@ app.MapPost("/softStop", server.softStop);
 app.MapPost("/getTraderState", server.getTraderState);
 
 app.Run();
-*/
+
 
 //___________________________________WS______________________________________
-
+/*
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -446,7 +448,9 @@ thread.Start();
 
 while (true)
 {
-    await WebSocketController.SendToAdd("Bonjour je suis heureux de vous annoncer que vous avez casse le game");
+    await WebSocketController.SendToAdd("This is the add message");
+    await WebSocketController.SendToRemove("This is the remove message");
+    await WebSocketController.SendToTrader("This is the trader message");
 
     Thread.Sleep(1000);
-}
+}*/
