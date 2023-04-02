@@ -163,9 +163,6 @@ namespace BuyEnhancedServer.Bybit
             //à partir du JSON body on crée une requête Bybit (facilite l'obtention de la signature)
             var bybitRequest = new BybitRequest(jsonBody);
 
-            //on prépare la requête à partir de la requête Bybit précédemment créée
-            var restRequest = this.PrepareRequest("/v5/order/create", bybitRequest);
-
             RestResponse response;
 
             //on essaye 5 fois
@@ -173,6 +170,9 @@ namespace BuyEnhancedServer.Bybit
             {
                 try
                 {
+                    //on prépare la requête à partir de la requête Bybit précédemment créée
+                    var restRequest = this.PrepareRequest("/v5/order/create", bybitRequest);
+
                     //on envoie simplement la requête
                     response = this.restClient.Post(restRequest);
                     
@@ -288,9 +288,6 @@ namespace BuyEnhancedServer.Bybit
             //à partir du JSON body on crée une requête Bybit (facilite l'obtention de la signature)
             var bybitRequest = new BybitRequest(jsonBody);
 
-            //on prépare la requête à partir de la requête Bybit précédemment créée
-            var restRequest = this.PrepareRequest("/v5/order/create", bybitRequest);
-
             RestResponse response;
 
             //on essaye 5 fois
@@ -298,6 +295,9 @@ namespace BuyEnhancedServer.Bybit
             {
                 try
                 {
+                    //on prépare la requête à partir de la requête Bybit précédemment créée
+                    var restRequest = this.PrepareRequest("/v5/order/create", bybitRequest);
+
                     //on envoie simplement la requête
                     response = this.restClient.Post(restRequest);
 
@@ -373,15 +373,16 @@ namespace BuyEnhancedServer.Bybit
             //à partir du JSON body on crée une requête Bybit (facilite l'obtention de la signature)
             BybitRequest bybitRequest = new (paramStr);
 
-            //on prépare la requête à partir de la requête Bybit précédemment créée
-            RestRequest restRequest = this.PrepareRequest("/v5/account/wallet-balance", bybitRequest);
-
             RestResponse response;
 
             for (int i =1;i<=5;i++)
             {
                 try
                 {
+
+                    //on prépare la requête à partir de la requête Bybit précédemment créée
+                    RestRequest restRequest = this.PrepareRequest("/v5/account/wallet-balance", bybitRequest);
+
                     //on envoie simplement la requête
                     response = this.restClient.Get(restRequest);
 
@@ -442,14 +443,15 @@ namespace BuyEnhancedServer.Bybit
 
             var bybitRequest = new BybitRequest(jsonBody);
 
-            RestRequest restRequest = this.PrepareRequest("/v5/position/switch-mode", bybitRequest);
-
             RestResponse response;
 
             for (int i = 1; i <= 5; i++)
             {
                 try
                 {
+
+                    RestRequest restRequest = this.PrepareRequest("/v5/position/switch-mode", bybitRequest);
+
                     response = this.restClient.Post(restRequest);
 
                     //decommenter pour afficher la réponse au format JSON
@@ -581,14 +583,15 @@ namespace BuyEnhancedServer.Bybit
 
             BybitRequest bybitRequest = new(paramStr);
 
-            RestRequest restRequest = this.PrepareRequest("/v5/position/list", bybitRequest);
-
             RestResponse response;
 
             for (int i = 1; i <= 5; i++)
             {
                 try
                 {
+
+                    RestRequest restRequest = this.PrepareRequest("/v5/position/list", bybitRequest);
+
                     response = this.restClient.Get(restRequest);
 
                     //decommenter pour afficher la réponse au format JSON

@@ -286,7 +286,7 @@ namespace BuyEnhancedServerv2.API
 
                         if (this.subscriptions.ContainsKey(anEncryptedUid))
                         {
-                            if(Trader.verifyEncryptedUid(anEncryptedUid))
+                            if(Trader.verifyEncryptedUid(anEncryptedUid) && this.subscriptions[anEncryptedUid].verifyAuthentificationInformations())
                             {
                                 if (!this.subscriptions[anEncryptedUid].isActiv())
                                 {
@@ -383,7 +383,7 @@ namespace BuyEnhancedServerv2.API
 
                     if (jsonResponse["anEncryptedUid"] != null)
                     {
-                        anEncryptedUid = (string)jsonResponse["anEncryptedUid"];
+                        anEncryptedUid = (string)jsonResponse["anEncryptedUid"]!;
 
                         if (this.subscriptions.ContainsKey(anEncryptedUid))
                         {

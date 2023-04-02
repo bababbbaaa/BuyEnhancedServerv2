@@ -900,6 +900,17 @@ namespace BuyEnhancedServer.Binance
         }
 
         /*
+        *    Nom : verifyAuthentificationInformations
+        *    Retour : Booléen indiquant si les informations d'authentification à l'API bybit sont correctes
+        *    Role : Indiquer la validité des informations d'authentification à Bybit
+        *    Fiabilite : Sure
+        */
+        public bool verifyAuthentificationInformations()
+        {
+            return BybitManager.verifyAuthentificationInformations(this.api_key,this.api_secret);
+        }
+
+        /*
         *    Nom : GetState
         *    Retour : State indiquant l'état de la souscription 
         *    Role : Obtenir l'état de la souscription
