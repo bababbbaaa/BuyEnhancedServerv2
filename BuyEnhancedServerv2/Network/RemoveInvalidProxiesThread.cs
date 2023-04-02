@@ -10,9 +10,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using BuyEnhancedServerv2.Utils;
+using BuyEnhancedServerv2.WebSocketController;
 
 namespace BuyEnhancedServer.Proxies
 {
@@ -32,6 +34,10 @@ namespace BuyEnhancedServer.Proxies
         private bool state;
         //Thread pour lancer en parallèle l'ajout de proxy
         Thread thread;
+        //booléen indiquant si tous les proxies ont été testé
+        private bool areAllProxiesTested;
+        //entier qui indique l'avancement du test à traver la liste de proxy
+        private int index;
 
 
 
@@ -67,6 +73,7 @@ namespace BuyEnhancedServer.Proxies
             this.timeout = aTimeout;
             this.state = false;
             this.thread = new(this.run);
+            this.areAllProxiesTested = false;
         }
 
         /*
@@ -79,6 +86,12 @@ namespace BuyEnhancedServer.Proxies
             Log.TraceInformation("RemoveInvalidProxiesThread.Start", "Appel");
             this.state = true;
             this.thread.Start();
+
+            _ = WebSocketController.SendToRemove(JsonSerializer.Serialize(new
+            {
+                level = "information",
+                message = "Remove est lancé"
+            }));
         }
 
         /*
@@ -92,6 +105,12 @@ namespace BuyEnhancedServer.Proxies
             this.state = false;
             while (this.isActiv()) ;
             this.thread = new(this.run);
+
+            _ = WebSocketController.SendToRemove(JsonSerializer.Serialize(new
+            {
+                level = "information",
+                message = "Remove est arrêté"
+            }));
         }
 
         /*
@@ -115,6 +134,8 @@ namespace BuyEnhancedServer.Proxies
         {
             Log.TraceInformation("RemoveInvalidProxiesThread.Run", "Appel");
 
+            this.areAllProxiesTested = false;
+
             try
             {
                 while (this.state)
@@ -122,7 +143,7 @@ namespace BuyEnhancedServer.Proxies
                     Console.WriteLine("Remove proxy lancé");
                     Log.TraceInformation("RemoveInvalidProxiesThread.Run", "Nouvelle itération");
 
-                    int i = 0;
+                    this.index = 1;
 
                     //try-finally : pour s'assurer que le mutex est toujours libéré
                     try
@@ -130,23 +151,31 @@ namespace BuyEnhancedServer.Proxies
                         this.proxyList.WaitOne();
 
                         //On parcourt la liste, si un proxy n'est pas valide on le supprime
-                        while (i < this.proxyList.count())
+                        while (this.index < this.proxyList.count())
                         {
                             if (!this.state) { return; }
                             Console.WriteLine("Nombre de proxy valide : " + this.proxyList.count().ToString());
 
-                            if (!(this.isGoodProxy(this.proxyList.elementAt(i))))
+                            if (!(this.isGoodProxy(this.proxyList.elementAt(this.index))))
                             {
-                                this.proxyList.remove(i);
-                                i--;
+                                this.proxyList.remove(this.index);
+                                this.index--;
                             }
 
                             this.proxyList.ReleaseMutex();
-                            i++;
+                            this.index++;
                             this.proxyList.WaitOne();
                         }
                     }
                     finally { this.proxyList.ReleaseMutex(); }
+
+                    this.areAllProxiesTested = true;
+
+                    _ = WebSocketController.SendToRemove(JsonSerializer.Serialize(new
+                    {
+                        level = "information",
+                        message = "Attente de 10 secondes..."
+                    }));
 
                     Thread.Sleep(10000);
 
@@ -218,15 +247,40 @@ namespace BuyEnhancedServer.Proxies
 
                     //si aucune erreur n'est leve alors on considère que le proxy est valide                
                     Console.WriteLine("remove --> isGoodProxy --> proxy valide : ");
+
+                    _ = WebSocketController.SendToRemove(JsonSerializer.Serialize(new
+                    {
+                        level = "information",
+                        message = "Proxy valide : " + this.index.ToString() + "/" + (this.proxyList.count() - 1).ToString()
+                    }));
+
                     return true;
                 }
                 catch (Exception)
                 {
                     Console.WriteLine("remove --> isGoodProxy --> proxy invalide");
+
+                    _ = WebSocketController.SendToRemove(JsonSerializer.Serialize(new
+                    {
+                        level = "information",
+                        message = "Proxy invalide : " + this.index.ToString() + "/" + (this.proxyList.count() - 1).ToString()
+                    }));
                 }
             }
 
             return false;
+        }
+
+        int getPourcentage()
+        {
+            if (this.areAllProxiesTested)
+            {
+                return 100;
+            }
+            else
+            {
+                return (int)this.index/this.proxyList.count();
+            }
         }
     }
 }

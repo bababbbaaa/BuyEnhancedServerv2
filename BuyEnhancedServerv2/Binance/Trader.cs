@@ -24,6 +24,10 @@ using AngleSharp.Dom;
 using System.Text.Json;
 using System.Globalization;
 using BuyEnhancedServerv2.Utils;
+using BuyEnhancedServerv2.WebSocketController;
+using AngleSharp.Text;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.ComponentModel;
 
 namespace BuyEnhancedServer.Binance
 {
@@ -86,6 +90,9 @@ namespace BuyEnhancedServer.Binance
         //état du thread (true: actif, false: inactif)
         private State state;
 
+        //état de la socket : true : ouverte, false : fermee
+        private bool isSocketOpen;
+
 
         /*
         *    Nom : Trader
@@ -107,6 +114,7 @@ namespace BuyEnhancedServer.Binance
             this.pourcentage = aPourcentage;
             this.invalidSymbol = InvalidSymbolList.Instance();
             this.isFirstRun = true;
+            this.isSocketOpen = false;
 
             this.oldPositions = new List<Position>();
             this.untakedPositions = new List<Position>();
@@ -191,6 +199,38 @@ namespace BuyEnhancedServer.Binance
         }
 
         /*
+        *    Nom : openSocket
+        *    Role : activer l'envoi d'information sur la socket
+        *    Fiabilité : Sure
+        */
+        public void openSocket()
+        {
+            this.isSocketOpen = true;
+        }
+
+        /*
+        *    Nom : closeSocket
+        *    Role : desactiver l'envoi d'information sur la socket
+        *    Fiabilité : Sure
+        */
+        public void closeSocket()
+        {
+            this.isSocketOpen = false;
+        }
+
+        public void sendToSocket(string level, string message)
+        {
+            if (this.isSocketOpen)
+            {
+                _ = WebSocketController.SendToTrader(JsonSerializer.Serialize(new
+                {
+                    level = level,
+                    message = message
+                }));
+            }
+        }
+
+        /*
         *    Nom : Run
         *    Role : Assurer le suivi intégral des positions du trader spécifié
         *    Fiabilite : Sure
@@ -206,6 +246,8 @@ namespace BuyEnhancedServer.Binance
                     Console.WriteLine("Nouvelle update position");
                     Log.TraceInformation("Trader.Run", "Nouvelle itération de la routine de mise à jour");
 
+                    this.sendToSocket("information","Nouvelle mise à jour : " + DateTime.Now.ToString());
+
                     List<Position> traderPositions;
 
                     try
@@ -219,6 +261,8 @@ namespace BuyEnhancedServer.Binance
                     {
                         Console.WriteLine("Trader --> Run --> Impossible d'obtenir les positions du trader\nMessage : " + ex.Message);
                         Log.TraceWarning("Trader.Run", "GetPositions a générée une erreur\nMessage : " + ex.Message);
+                        this.sendToSocket("warning", "Impossible d'obtenir les positions du trader");
+
                         continue;
                     }
 
@@ -495,6 +539,9 @@ namespace BuyEnhancedServer.Binance
                 if (!Trader.IsInTheList(this.oldPositions.ElementAt(i), traderPositions))
                 {
                     Console.WriteLine("UpdateOldPositions : suppression du symbol de oldPositions : "+ this.oldPositions.ElementAt(i).symbol);
+
+                    this.sendToSocket("information", "Suppression du symbole des aciennes positions : "+ this.oldPositions.ElementAt(i).symbol);
+
                     this.oldPositions.RemoveAt(i);
                 }
                 else
@@ -519,6 +566,8 @@ namespace BuyEnhancedServer.Binance
                 if (!Trader.IsInTheList(position, this.oldPositions) && !Trader.IsInTheList(position, this.botPositions) && !this.invalidSymbol.isInTheList(position.symbol))
                 {
                     Console.WriteLine("UpdateUntakedPositions : ajout de la devise a untakedPositions : " + position.symbol);
+                    this.sendToSocket("information", "Ajout du symbole aux positions à prendre : " + position.symbol);
+
                     this.untakedPositions.Add(position);
                 }
             }
@@ -541,10 +590,12 @@ namespace BuyEnhancedServer.Binance
                 if (!Trader.IsInTheList(this.botPositions.ElementAt(i),traderPositions))
                 {
                     Console.WriteLine("UpdateUnclosedPositions : ajout de la devise a unclosedPositions : " + this.botPositions.ElementAt(i).symbol);
+                    this.sendToSocket("information", "Ajout du symbole aux positions à fermer : " + this.botPositions.ElementAt(i).symbol);
 
                     this.unclosedPositions.Add(this.botPositions.ElementAt(i));
 
                     Console.WriteLine("UpdateUnclosedPositions : suppression devise de botPositions : " + this.botPositions.ElementAt(i).symbol);
+                    this.sendToSocket("information", "Suppression du symbole des positions courrantes : " + this.botPositions.ElementAt(i).symbol);
 
                     this.botPositions.RemoveAt(i);
                 }
@@ -596,10 +647,12 @@ namespace BuyEnhancedServer.Binance
                             if((diff > 0 && traderPosition.side == "Buy")||(diff < 0 && traderPosition.side == "Sell"))
                             {
                                 Console.WriteLine("UpdateUnalteredPositions(+) : ajout de la devise a unalteredPositions : " + positionToAlter.symbol + " : " + botPosition.size.ToString(CultureInfo.InvariantCulture) + "-->" + traderPosition.size.ToString(CultureInfo.InvariantCulture));
+                                this.sendToSocket("information", "Ajout de la devise aux positions à modifier : " + positionToAlter.symbol + " : " + botPosition.size.ToString(CultureInfo.InvariantCulture) + "-->" + traderPosition.size.ToString(CultureInfo.InvariantCulture));
                             }
                             else
                             {
                                 Console.WriteLine("UpdateUnalteredPositions(-) : ajout de la devise a unalteredPositions : " + positionToAlter.symbol + " : " + botPosition.size.ToString(CultureInfo.InvariantCulture) + "-->" + traderPosition.size.ToString(CultureInfo.InvariantCulture));
+                                this.sendToSocket("information", "Ajout de la devise aux positions à modifier : " + positionToAlter.symbol + " : " + botPosition.size.ToString(CultureInfo.InvariantCulture) + "-->" + traderPosition.size.ToString(CultureInfo.InvariantCulture));
                             }
 
                             this.unalteredPositions.Add(positionToAlter);
@@ -633,6 +686,7 @@ namespace BuyEnhancedServer.Binance
                     if ((e.code == 10001 || e.code == 1) && e.Message.Contains("symbol invalid"))
                     {
                         Console.WriteLine("Ce symbol n'est pas disponible sur bybit");
+                        this.sendToSocket("warning", "Un symbole non disponible sur Bybit a été rencontré");
                         this.invalidSymbol.add(this.untakedPositions.ElementAt(0).symbol);
                         this.untakedPositions.RemoveAt(0);
                         return;
@@ -640,6 +694,7 @@ namespace BuyEnhancedServer.Binance
 
                     Log.TraceWarning("Trader.TakePositions", "Erreur lors de l'obtention de la taille, position déplacé dans oldPositions\nMessage : " + e.Message);
                     Console.WriteLine("Trader --> TakePositions --> Erreur lors de l'obtention de la taille\nCode d'erreur : " + e.code.ToString()+ "\nMessage : " + e.Message);
+                    this.sendToSocket("warning", "Erreur lors de l'obtention de la taille, la positions a été deplacé dans les anciennes positions");
                     this.oldPositions.Add(this.untakedPositions.ElementAt(0));
                     this.untakedPositions.RemoveAt(0);
                     return;
@@ -648,6 +703,7 @@ namespace BuyEnhancedServer.Binance
                 {
                     Log.TraceWarning("Trader.TakePositions", "Erreur lors de l'obtention de la taille, position déplacé dans oldPositions\nMessage : " + e.Message);
                     Console.WriteLine("Trader --> TakePositions --> Erreur lors de l'obtention de la taille\nMessage : " + e.Message);
+                    this.sendToSocket("warning", "Erreur lors de l'obtention de la taille, la positions a été deplacée dans les anciennes positions");
                     this.oldPositions.Add(this.untakedPositions.ElementAt(0));
                     this.untakedPositions.RemoveAt(0);
                     return;
@@ -661,17 +717,20 @@ namespace BuyEnhancedServer.Binance
                     this.botPositions.Add(this.untakedPositions.ElementAt(0));
                     Console.WriteLine("Trader --> TakePositions --> position ouverte : " + this.untakedPositions.ElementAt(0).symbol);
                     Log.TraceInformation("Trader.TakePositions", "position ouverte : " + this.untakedPositions.ElementAt(0).symbol);
+                    this.sendToSocket("information", "Position ouverte : " + this.untakedPositions.ElementAt(0).symbol);
                 }
                 else if (retour == 1)
                 {
                     Console.WriteLine("Trader --> TakePositions --> Erreur symbole, symbole ajouté à la liste des symboles invalides");
                     Log.TraceWarning("Trader.TakePositions", "Erreur symbole, symbole ajouté à la liste des symboles invalides");
+                    this.sendToSocket("warning", "Erreur symbole, symbole ajouté à la liste des symboles invalides");
                     this.invalidSymbol.add(this.untakedPositions.ElementAt(0).symbol);
                 }
                 else
                 {
                     Console.WriteLine("Trader --> TakePositions --> Erreur lors de la prise de la position, position déplacé dans oldPositions");
                     Log.TraceWarning("Trader.TakePositions", "Erreur lors de la prise de la position, position déplacé dans oldPositions");
+                    this.sendToSocket("warning", "Erreur lors de la prise de la position, la positions a été deplacée dans les anciennes positions");
                     this.oldPositions.Add(this.untakedPositions.ElementAt(0));
                 }
                 this.untakedPositions.RemoveAt(0);
@@ -695,12 +754,14 @@ namespace BuyEnhancedServer.Binance
                 {
                     Console.WriteLine("Trader --> ClosePositions --> position fermée : " + this.unclosedPositions.ElementAt(0).symbol);
                     Log.TraceInformation("Trader.ClosePositions", "position fermée : " + this.unclosedPositions.ElementAt(0).symbol);
+                    this.sendToSocket("information", "Position fermée : " + this.unclosedPositions.ElementAt(0).symbol);
                     this.unclosedPositions.RemoveAt(0);
                 }
                 else
                 {
                     Console.WriteLine("Trader --> TakePositions --> Erreur lors de la fermeture de la position");
                     Log.TraceError("Trader.ClosePositions", "Erreur lors de la fermeture de la position");
+                    this.sendToSocket("error", "Erreur lors de la fermeture de la position");
                 }
             }
         }
@@ -716,7 +777,8 @@ namespace BuyEnhancedServer.Binance
 
             while (this.unalteredPositions.Count > 0)
             {
-                Console.WriteLine("AlterPositions :     size:" + this.unalteredPositions.ElementAt(0).size.ToString(CultureInfo.InvariantCulture), "  Coef :", this.unalteredPositions.ElementAt(0).coef.ToString(CultureInfo.InvariantCulture));
+                Console.WriteLine("AlterPositions :     size:" + this.unalteredPositions.ElementAt(0).size.ToString(CultureInfo.InvariantCulture)+ "  Coef :"+ this.unalteredPositions.ElementAt(0).coef.ToString(CultureInfo.InvariantCulture));
+                this.sendToSocket("information", "Modificaiton de la position :     size:" + this.unalteredPositions.ElementAt(0).size.ToString(CultureInfo.InvariantCulture)+ "  Coef : "+ this.unalteredPositions.ElementAt(0).coef.ToString(CultureInfo.InvariantCulture));
 
                 double size = this.unalteredPositions.ElementAt(0).size * this.unalteredPositions.ElementAt(0).coef;
 
@@ -728,6 +790,7 @@ namespace BuyEnhancedServer.Binance
                 {
                     Console.WriteLine("Trader --> AlterPositions --> Impossible de préparer la taille de la position\nMessage : " + ex.Message);
                     Log.TraceWarning("Trader.AlterPositions", "Impossible de préparer la taille de la position\nMessage : " + ex.Message);
+                    this.sendToSocket("warning", "Impossible de préparer la taille de la position");
                     continue;
                 }
 
@@ -737,11 +800,13 @@ namespace BuyEnhancedServer.Binance
                 {
                     Console.WriteLine("position modifie : " + this.unalteredPositions.ElementAt(0).symbol);
                     Log.TraceInformation("Trader.AlterPositions", "Position modifie : "+ this.unalteredPositions.ElementAt(0).symbol);
+                    this.sendToSocket("information", "Position modifie : " + this.unalteredPositions.ElementAt(0).symbol);
                 }
                 else
                 {
                     Console.WriteLine("Trader --> AlterPositions --> Erreur lors de la modification de la taille de la position, la position ne sera pas modifié");
                     Log.TraceWarning("Trader.AlterPositions", "Erreur lors de la modification de la taille de la position, la position ne sera pas modifié");
+                    this.sendToSocket("warning", "Erreur lors de la modification de la taille de la position, la position ne sera pas modifié");
                 }
 
                 foreach (Position botPosition in this.botPositions)
@@ -835,17 +900,17 @@ namespace BuyEnhancedServer.Binance
         }
 
         /*
-        *    Nom : verifyEncryptedUid
-        *    Retour : booléen indiquant si les informations sont valides
-        *    Role : vérifier la validité des informations
-        *    Fiabilite : Possibilité de lever une Exception
+        *    Nom : GetState
+        *    Retour : State indiquant l'état de la souscription 
+        *    Role : Obtenir l'état de la souscription
+        *    Fiabilite : Sure
         */
 
         public State GetState() { return state; }
 
 
         //_____________________________________________________FONCTIONS DE TESTS________________________________________________________________
-
+        /*
         private void Save(List<Position> positionList)
         {
             try
@@ -903,6 +968,6 @@ namespace BuyEnhancedServer.Binance
         private List<Position> GetFakePositions()
         {
             return this.Load();
-        }
+        }*/
     }
 }

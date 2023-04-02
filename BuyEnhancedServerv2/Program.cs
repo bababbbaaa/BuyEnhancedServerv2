@@ -372,7 +372,7 @@ remove.Start();
 add.Start();
 */
 //___________________________________API______________________________________
-
+/*
 const string MyAllowSpecificOrigins = "AllowSpecificOrigins";
 
 var builder = WebApplication.CreateBuilder(args);
@@ -422,7 +422,7 @@ app.MapPost("/softStop", server.softStop);
 app.MapPost("/deleteTrader", server.deleteTrader);
 
 app.Run();
-
+*/
 
 //___________________________________WS______________________________________
 /*
@@ -454,3 +454,73 @@ while (true)
 
     Thread.Sleep(1000);
 }*/
+
+//___________________________________API et WS______________________________________
+
+const string MyAllowSpecificOrigins = "AllowSpecificOrigins";
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+                      policy =>
+                      {
+                          policy.WithOrigins("*");
+                      });
+});
+
+var app = builder.Build();
+
+app.UseCors(MyAllowSpecificOrigins);
+
+API server = API.Instance();
+
+var webSocketOptions = new WebSocketOptions
+{
+    KeepAliveInterval = TimeSpan.FromSeconds(30)
+};
+
+app.UseWebSockets(webSocketOptions);
+
+app.MapControllers();
+
+app.MapGet("/", () => "Hello World!");
+
+app.MapGet("/proxyCount", server.getProxyCount);
+
+app.MapGet("/isRemoveActiv", server.isRemoveActiv);
+
+app.MapGet("/startRemove", server.startRemove);
+
+app.MapGet("/stopRemove", server.stopRemove);
+
+app.MapGet("/isAddActiv", server.isAddActiv);
+
+app.MapGet("/startAdd", server.startAdd);
+
+app.MapGet("/stopAdd", server.stopAdd);
+
+app.MapGet("/getSubscriptionList", server.getSubscriptionList);
+
+app.MapPost("/areValidInformations", server.areValidInformations);
+
+app.MapPost("/addTrader", server.addTrader);
+
+app.MapPost("/launchSubscription", server.launchSubscription);
+
+app.MapPost("/brutalStop", server.brutalStop);
+
+app.MapPost("/softStop", server.softStop);
+
+app.MapPost("/deleteTrader", server.deleteTrader);
+
+app.MapPost("/openTraderSocket", server.openTraderSocket);
+
+app.MapGet("/closeTraderSocket", server.closeTraderSocket);
+
+Thread thread = new Thread(app.Run);
+
+thread.Start();

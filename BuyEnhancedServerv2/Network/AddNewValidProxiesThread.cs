@@ -12,6 +12,7 @@ using AngleSharp.Html.Parser;
 using AngleSharp.Io;
 using BuyEnhancedServer.Binance;
 using BuyEnhancedServerv2.Utils;
+using BuyEnhancedServerv2.WebSocketController;
 using Newtonsoft.Json.Linq;
 using RestSharp;
 using RestSharp.Serializers;
@@ -25,6 +26,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using static System.Net.WebRequestMethods;
@@ -120,6 +122,12 @@ namespace BuyEnhancedServer.Proxies
             Log.TraceInformation("AddNewValidProxiesThread.Start", "Appel");
             this.state = true;
             this.thread.Start();
+
+            _ = WebSocketController.SendToAdd(JsonSerializer.Serialize(new
+            {
+                level = "information",
+                message = "Add est lancé"
+            }));
         }
 
         /*
@@ -174,6 +182,12 @@ namespace BuyEnhancedServer.Proxies
                     //on ajoute chaque nouveau proxy à une liste nommée newProxies
                     try
                     {
+                        _ = WebSocketController.SendToAdd(JsonSerializer.Serialize(new
+                        {
+                            level = "information",
+                            message = "Recherche de proxy sur Proxy Scrape"
+                        }));
+
                         if (!this.state){return;}
                         newProxies = newProxies.Join(this.getNewProxiesFromProxyScrape());
                     }
@@ -181,10 +195,22 @@ namespace BuyEnhancedServer.Proxies
                     {
                         Console.WriteLine("Add --> Run --> Erreur lors de l'obtention de nouveau proxy depuis Proxy Scrape\nMessage : " + e.Message);
                         Log.TraceWarning("AddNewValidProxiesThread.Run", "Erreur lors de l'obtention de nouveau proxy depuis Proxy Scrape\nMessage : " + e.Message);
+
+                        _ = WebSocketController.SendToAdd(JsonSerializer.Serialize(new
+                        {
+                            level = "warning",
+                            message = "Erreur lors de l'obtention de nouveau proxy depuis Proxy Scrape"
+                        }));
                     }
 
                     try
                     {
+                        _ = WebSocketController.SendToAdd(JsonSerializer.Serialize(new
+                        {
+                            level = "information",
+                            message = "Recherche de proxy sur Geonode"
+                        }));
+
                         if (!this.state) { return; }
                         newProxies = newProxies.Join(this.getNewProxiesFromGeonode());
                     }
@@ -192,10 +218,22 @@ namespace BuyEnhancedServer.Proxies
                     {
                         Console.WriteLine("Add --> Run --> Erreur lors de l'obtention de nouveau proxy depuis Geonode\nMessage : " + e.Message);
                         Log.TraceWarning("AddNewValidProxiesThread.Run", "Erreur lors de l'obtention de nouveau proxy depuis Geonode\nMessage : " + e.Message);
+
+                        _ = WebSocketController.SendToAdd(JsonSerializer.Serialize(new
+                        {
+                            level = "warning",
+                            message = "Erreur lors de l'obtention de nouveau proxy depuis Geonode"
+                        }));
                     }
 
                     try
                     {
+                        _ = WebSocketController.SendToAdd(JsonSerializer.Serialize(new
+                        {
+                            level = "information",
+                            message = "Recherche de proxy sur FreeProxy"
+                        }));
+
                         if (!this.state) { return; }
                         newProxies = newProxies.Join(this.getNewProxiesFromFreeProxy());
                     }
@@ -203,6 +241,12 @@ namespace BuyEnhancedServer.Proxies
                     {
                         Console.WriteLine("Add --> Run --> Erreur lors de l'obtention de nouveau proxy depuis FreeProxy\nMessage : " + e.Message);
                         Log.TraceWarning("AddNewValidProxiesThread.Run", "Erreur lors de l'obtention de nouveau proxy depuis FreeProxy\nMessage : " + e.Message);
+
+                        _ = WebSocketController.SendToAdd(JsonSerializer.Serialize(new
+                        {
+                            level = "warning",
+                            message = "Erreur lors de l'obtention de nouveau proxy depuis FreeProxy"
+                        }));
                     }
                     
                     //on enlève les proxies déjà présent dans la liste
@@ -218,7 +262,13 @@ namespace BuyEnhancedServer.Proxies
                         count++;
 
                         Console.WriteLine($"Add --> {count}/{newProxies.Count}");
-                                                
+
+                        _ = WebSocketController.SendToAdd(JsonSerializer.Serialize(new
+                        {
+                            level = "infomation",
+                            message = $"Test : {count}/{newProxies.Count}"
+                        }));
+
                         if (this.isGoodProxy(newProxy))
                         {
                             //try-finally : pour s'assurer que le mutex est toujours libéré
@@ -530,11 +580,24 @@ namespace BuyEnhancedServer.Proxies
 
                 //si aucune erreur n'est leve alors on considère que le proxy est valide                
                 Console.WriteLine("add --> isGoodProxy --> nouveau proxy valide : " + proxy.Address!.ToString());
+
+                _ = WebSocketController.SendToAdd(JsonSerializer.Serialize(new
+                {
+                    level = "infomation",
+                    message = "Proxy valide : " + proxy.Address!.ToString()
+                }));
+
                 return true;
             }
             catch(Exception)
             {
                 Console.WriteLine("add --> isGoodProxy --> Proxy invalide");
+
+                _ = WebSocketController.SendToAdd(JsonSerializer.Serialize(new
+                {
+                    level = "infomation",
+                    message = "Proxy invalide"
+                }));
             }
             
             return false;

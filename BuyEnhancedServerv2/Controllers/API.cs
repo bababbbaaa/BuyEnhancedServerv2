@@ -454,5 +454,65 @@ namespace BuyEnhancedServerv2.API
             }
 
         }
+
+        public Object openTraderSocket(HttpContext context)
+        {
+            try
+            {
+                string anEncryptedUid;
+
+                using (StreamReader reader = new StreamReader(context.Request.Body, Encoding.UTF8))
+                {
+                    JObject jsonResponse = JObject.Parse(reader.ReadToEndAsync().WaitAsync(TimeSpan.FromMilliseconds(5000)).Result);
+
+                    if (jsonResponse["anEncryptedUid"] != null)
+                    {
+                        anEncryptedUid = (string)jsonResponse["anEncryptedUid"]!;
+
+                        if (this.subscriptions.ContainsKey(anEncryptedUid))
+                        {
+                            this.subscriptions[anEncryptedUid].openSocket();
+
+                            return new { retCode = 0, retMessage = "Socket ouvert avec succès" };
+                        }
+
+                        return new
+                        {
+                            retCode = 3,
+                            retMessage = "Impossible de trouver des informations liées à une souscription avec cet identifiant de trader"
+                        };
+                    }
+
+                    return new
+                    {
+                        retCode = 1,
+                        retMessage = "Le requête semble invalide"
+                    };
+                }
+
+            }
+            catch (Exception e)
+            {
+                return new { retCode = 2, retMessage = e.ToString() };
+            }
+        }
+
+        public Object closeTraderSocket(HttpContext context)
+        {
+            try
+            {
+                foreach(var subscription in this.subscriptions.Values)
+                {
+                    subscription.closeSocket();
+                }
+
+                return new { retCode = 0 };
+            }
+            catch (Exception e)
+            {
+                return new { retCode = 2, retMessage = e.ToString() };
+            }
+        }
+
     }
 }
