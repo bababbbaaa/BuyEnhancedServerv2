@@ -55,6 +55,15 @@ namespace BuyEnhancedServerv2.API
             };
         }
 
+        public Object getRemovePourcentage()
+        {
+            return new
+            {
+                retCode = 0,
+                result = new { pourcentage = this.remove.getPourcentage()}
+            };
+        }
+
         public Object isRemoveActiv()
         {
             return new

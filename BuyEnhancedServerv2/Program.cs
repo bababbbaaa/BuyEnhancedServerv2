@@ -485,9 +485,10 @@ var webSocketOptions = new WebSocketOptions
 
 app.UseWebSockets(webSocketOptions);
 
-app.MapControllers();
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
-app.MapGet("/", () => "Hello World!");
+app.MapControllers();
 
 app.MapGet("/proxyCount", server.getProxyCount);
 
@@ -520,6 +521,9 @@ app.MapPost("/deleteTrader", server.deleteTrader);
 app.MapPost("/openTraderSocket", server.openTraderSocket);
 
 app.MapGet("/closeTraderSocket", server.closeTraderSocket);
+
+app.MapGet("/getRemovePourcentage", server.getRemovePourcentage);
+
 
 Thread thread = new Thread(app.Run);
 

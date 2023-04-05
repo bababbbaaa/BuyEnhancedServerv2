@@ -103,6 +103,7 @@ namespace BuyEnhancedServer.Proxies
         {
             Log.TraceInformation("RemoveInvalidProxiesThread.Stop", "Appel");
             this.state = false;
+            this.areAllProxiesTested = false;
             while (this.isActiv()) ;
             this.thread = new(this.run);
 
@@ -271,7 +272,7 @@ namespace BuyEnhancedServer.Proxies
             return false;
         }
 
-        int getPourcentage()
+        public int getPourcentage()
         {
             if (this.areAllProxiesTested)
             {
@@ -279,7 +280,7 @@ namespace BuyEnhancedServer.Proxies
             }
             else
             {
-                return (int)this.index/this.proxyList.count();
+                return (int)((float)this.index / (float)this.proxyList.count() * 100);
             }
         }
     }
