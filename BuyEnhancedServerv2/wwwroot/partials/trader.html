@@ -1,9 +1,0 @@
-<main>
-    <!--On aura plusieurs traders on utilisera la répétition de angular trader in traders...-->
-    <div class="trader" ng-repeat="trader in traderList">
-        <h5>{{trader.encryptedUid}}</h5>
-        <button ng-click="onClickActionButtonEventHandler(trader.index)">{{trader.actionButtonText}}</button>
-        <a href="#!/socketInformation/trader" ng-click="openTraderSocket(trader.index)">View informations</a>
-        <button ng-click="onClickDeleteButtonEventHandler(trader.index)">Delete</button>
-    </div>
-</main>

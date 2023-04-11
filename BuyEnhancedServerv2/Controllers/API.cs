@@ -438,9 +438,18 @@ namespace BuyEnhancedServerv2.API
 
                         if (this.subscriptions.ContainsKey(anEncryptedUid))
                         {
-                            subscriptions.Remove(anEncryptedUid);
+                            if (!this.subscriptions[anEncryptedUid].isActiv())
+                            {
+                                subscriptions.Remove(anEncryptedUid);
 
-                            return new { retCode = 0, retMessage = "Trader supprimé avec succès" };
+                                return new { retCode = 0, retMessage = "Trader supprimé avec succès" };
+                            }
+
+                            return new
+                            {
+                                retCode = 8,
+                                retMessage = "Impossible de supprimer un trader dont la souscription est active"
+                            };
                         }
 
                         return new

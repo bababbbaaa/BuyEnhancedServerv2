@@ -455,7 +455,7 @@ while (true)
     Thread.Sleep(1000);
 }*/
 
-//___________________________________API et WS______________________________________
+//___________________________________API et WS et Serveur Web______________________________________
 
 const string MyAllowSpecificOrigins = "AllowSpecificOrigins";
 
@@ -485,8 +485,6 @@ var webSocketOptions = new WebSocketOptions
 
 app.UseWebSockets(webSocketOptions);
 
-app.UseDefaultFiles();
-app.UseStaticFiles();
 
 app.MapControllers();
 
