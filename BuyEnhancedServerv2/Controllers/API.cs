@@ -438,6 +438,7 @@ namespace BuyEnhancedServerv2.API
 
                         if (this.subscriptions.ContainsKey(anEncryptedUid))
                         {
+                            Console.WriteLine(this.subscriptions[anEncryptedUid].isActiv());
                             if (!this.subscriptions[anEncryptedUid].isActiv())
                             {
                                 subscriptions.Remove(anEncryptedUid);

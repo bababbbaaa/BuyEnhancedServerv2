@@ -20,7 +20,7 @@
     "https": {
         "commandName": "Project",
         "dotnetRunMessages": false,
-        "launchBrowser": true,
+        "launchBrowser": false,
         "applicationUrl": "https://172.20.4.118:7132;http://172.20.4.118:5218",
         "environmentVariables": {
             "ASPNETCORE_ENVIRONMENT": "Development"

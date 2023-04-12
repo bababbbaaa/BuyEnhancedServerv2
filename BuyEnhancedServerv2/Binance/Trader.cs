@@ -183,6 +183,11 @@ namespace BuyEnhancedServer.Binance
         {
             Log.TraceInformation("Trader.softStop", "Appel");
             this.state = State.softStopped;
+            while (this.isActiv())
+            {
+                Thread.Sleep(1000);
+            };
+            this.thread = new(this.run);
         }
 
         /*
@@ -195,7 +200,7 @@ namespace BuyEnhancedServer.Binance
         {
             Log.TraceInformation("Trader.IsAlive", "Appel");
 
-            return (this.thread.ThreadState == ThreadState.Running);
+            return this.thread.IsAlive;
         }
 
         /*
@@ -294,7 +299,7 @@ namespace BuyEnhancedServer.Binance
 
                     if (this.state == State.softStopped && this.botPositions.Count == 0)
                     {
-                        this.Stop();
+                        this.state = State.stopped;
                         break;
                     }
 
