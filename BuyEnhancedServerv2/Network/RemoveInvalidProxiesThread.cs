@@ -104,6 +104,7 @@ namespace BuyEnhancedServer.Proxies
             Log.TraceInformation("RemoveInvalidProxiesThread.Stop", "Appel");
             this.state = false;
             this.areAllProxiesTested = false;
+            this.index = 1;
             while (this.isActiv()) ;
             this.thread = new(this.run);
 
